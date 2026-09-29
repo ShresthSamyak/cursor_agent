@@ -1,0 +1,86 @@
+{
+  "scenario_id": "trail_07_addition_passengers",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Addition that no running step depends on: keep the plan running.",
+    "suite": "trail",
+    "covers": [
+      "addition"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Look for flights to Seattle tomorrow.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "interruption",
+      "payload": {
+        "text": "And it's for two people."
+      },
+      "_interrupt": "addition"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search_completes",
+        "type": "tool_called",
+        "weight": 0.4,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "seattle"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "not_restarted",
+        "type": "tool_not_called",
+        "weight": 0.3,
+        "tool": "flight_search",
+        "after_ms": 900
+      },
+      {
+        "id": "final_seattle",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "seattle",
+          "fl-sea"
+        ]
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 900,
+      "invalidated_calls": [],
+      "required_state_after_interrupt": {
+        "slots.passengers": [
+          "2",
+          "two"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

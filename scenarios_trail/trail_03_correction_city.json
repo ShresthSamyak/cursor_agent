@@ -1,0 +1,122 @@
+{
+  "scenario_id": "trail_03_correction_city",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Destination correction mid-search (re-skinned pub_02).",
+    "suite": "trail",
+    "covers": [
+      "correction"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Search flights to Chicago ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "for Thursday.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1700,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Sorry, I meant Seattle."
+      },
+      "_interrupt": "correction"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search_seattle",
+        "type": "tool_called",
+        "weight": 0.4,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "seattle",
+            "sea"
+          ]
+        },
+        "after_ms": 1700,
+        "must_complete": true
+      },
+      {
+        "id": "no_new_chicago",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "chicago",
+            "chi"
+          ]
+        },
+        "after_ms": 1700
+      },
+      {
+        "id": "final_seattle",
+        "type": "final_response_contains",
+        "weight": 0.25,
+        "any_of": [
+          "seattle",
+          "fl-sea"
+        ]
+      },
+      {
+        "id": "ack_new_city",
+        "type": "spoken_contains",
+        "weight": 0.15,
+        "any_of": [
+          "seattle"
+        ],
+        "after_ms": 1700,
+        "before_ms": 2900
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1700,
+      "invalidated_calls": [
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "chicago",
+              "chi"
+            ]
+          },
+          "invalid_after_ms": 1700
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.destination": [
+          "seattle"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 2,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "scenario_id": "trail_14_say_again",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L1",
+    "description": "Clarification: 'say that again' repeats without re-planning.",
+    "suite": "trail",
+    "covers": [
+      "clarification"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "What can you help me with?",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 2500,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Sorry, can you say that again?",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "no_tools",
+        "type": "no_tool_calls",
+        "weight": 0.3
+      },
+      {
+        "id": "repeated",
+        "type": "final_response_contains",
+        "weight": 0.7,
+        "any_of": [
+          "flight"
+        ],
+        "after_ms": 2500
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

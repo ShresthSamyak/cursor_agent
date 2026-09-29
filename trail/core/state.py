@@ -1,73 +1,75 @@
-"""Immutable snapshots. Only Runtime's event loop replaces session state."""
+"""Immutable session snapshots and interruption metrics (PDF p. 17)."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
-from uuid import uuid4
-
-
-class Phase(str, Enum):
-    LISTENING = "listening"
-    PLANNING = "planning"
-    SPEAKING = "speaking"
-    PAUSED = "paused"
-    DONE = "done"
-    CLOSED = "closed"
-
-
-@dataclass(frozen=True)
-class Evidence:
-    id: str
-    text: str
-    context: str = ""
-    app: str = ""
-    source: str = ""
-    timestamp: float = 0.0
-    untrusted: bool = True
-
-
-@dataclass(frozen=True)
-class PreparedTurn:
-    """Provider result. No tool is executed by this core milestone."""
-
-    chunks: tuple[str, ...]
-    evidence: tuple[Evidence, ...] = ()
-    plan: tuple[str, ...] = ()
-    pending_tools: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True)
-class Checkpoint:
-    prompt: str
-    partial_answer: str = ""
-    next_chunk: int = 0
-    plan_position: int = 0
-    prepared: PreparedTurn | None = None
-    evidence: tuple[Evidence, ...] = ()
-    pending_tools: tuple[str, ...] = ()
+from typing import Any
 
 
 @dataclass(frozen=True)
 class SessionState:
-    session_id: str = field(default_factory=lambda: uuid4().hex)
-    # A semantic epoch, not a token counter. Progress cannot invalidate itself.
-    version: int = 0
-    turn_id: str | None = None
-    phase: Phase = Phase.LISTENING
+    """What outside readers may see. Only Runtime's loop replaces it."""
+
+    session_id: str
+    version: int = 0                     # increments on every semantic change
+    turn: int = 0
+    phase: str = "listening"             # listening, planning, tool_calls, speaking, done, closed
     ducked: bool = False
-    speaking: bool = False
+    user_speaking: bool = False
     typing: bool = False
-    checkpoint: Checkpoint | None = None
-    evidence: tuple[Evidence, ...] = ()
+    focus: dict[str, Any] | None = None  # {"intent", "slots"}
+    goals: tuple[dict[str, Any], ...] = ()
+    in_flight: tuple[str, ...] = ()
     active_app: str = ""
 
 
 @dataclass
 class Metrics:
-    turns_started: int = 0
-    turns_cancelled: int = 0
-    turns_resumed: int = 0
+    turns: int = 0
+    interrupts: dict[str, int] = field(default_factory=dict)
+    time_to_yield_ms: list[float] = field(default_factory=list)
+    first_response_ms: list[float] = field(default_factory=list)
+    correction_latency_ms: list[float] = field(default_factory=list)
+    corrections: int = 0
+    fork_spawned: int = 0
+    fork_hits: int = 0
+    fork_killed: int = 0
+    backchannel_false_stops: int = 0
+    stale_output_leaks: int = 0
+    stale_results_ignored: int = 0
     stale_proposals_dropped: int = 0
+    wasted_agent_interrupts: int = 0
+    duplicate_writes: int = 0
+    duplicate_writes_prevented: int = 0
+    calls_issued: int = 0
+    calls_cancelled: int = 0
+    compensations: int = 0
+    retries: int = 0
+    fillers: int = 0
+    held_at_barrier: int = 0
+    llm_calls: int = 0
+    llm_failures: int = 0
     duplicate_events_dropped: int = 0
-    tokens_emitted: int = 0
     errors: int = 0
-    max_yield_ms: float = 0.0
+
+    def interrupt(self, kind: str) -> None:
+        self.interrupts[kind] = self.interrupts.get(kind, 0) + 1
+
+    @property
+    def fork_hit_rate(self) -> float | None:
+        return self.fork_hits / self.corrections if self.corrections else None
+
+    def as_dict(self) -> dict[str, Any]:
+        def stats(xs: list[float]) -> dict[str, float] | None:
+            if not xs:
+                return None
+            s = sorted(xs)
+            return {"n": len(s), "max": round(s[-1], 1), "p50": round(s[len(s) // 2], 1),
+                    "mean": round(sum(s) / len(s), 1)}
+
+        out = {k: v for k, v in self.__dict__.items() if not isinstance(v, list)}
+        out["time_to_yield_ms"] = stats(self.time_to_yield_ms)
+        out["first_response_ms"] = stats(self.first_response_ms)
+        out["correction_latency_ms"] = stats(self.correction_latency_ms)
+        out["fork_hit_rate"] = self.fork_hit_rate
+        return out

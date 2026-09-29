@@ -1,0 +1,109 @@
+{
+  "scenario_id": "trail_12_abandon_for_device",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Full intent change: abandon the flight, troubleshoot the TV.",
+    "suite": "trail",
+    "covers": [
+      "topic_switch"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find me a flight to Chicago ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "for tomorrow.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1600,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Forget the flight, my QN90 TV keeps blinking a red LED."
+      },
+      "_interrupt": "topic_switch"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "no_new_flight",
+        "type": "tool_not_called",
+        "weight": 0.15,
+        "tool": "flight_search",
+        "after_ms": 1600
+      },
+      {
+        "id": "manual",
+        "type": "tool_called",
+        "weight": 0.35,
+        "tool": "lookup_manual",
+        "args_subset": {
+          "device_model": [
+            "qn90"
+          ]
+        },
+        "after_ms": 1600,
+        "must_complete": true
+      },
+      {
+        "id": "final_led",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "led"
+        ]
+      },
+      {
+        "id": "no_ticket_unasked",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "create_support_ticket"
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1600,
+      "invalidated_calls": [
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "chicago"
+            ]
+          },
+          "invalid_after_ms": 1600
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.device_model": [
+          "qn90"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 2,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

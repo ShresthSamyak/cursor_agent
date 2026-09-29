@@ -1,0 +1,107 @@
+{
+  "scenario_id": "trail_04_correction_date",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Date correction: the search depends on the date slot, so it re-runs with the new date.",
+    "suite": "trail",
+    "covers": [
+      "correction",
+      "slot_dependency"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find flights to Boston on Friday.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1000,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Actually, make it Saturday."
+      },
+      "_interrupt": "correction"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search_saturday",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "boston",
+            "bos"
+          ],
+          "date": [
+            "saturday"
+          ]
+        },
+        "after_ms": 1000,
+        "must_complete": true
+      },
+      {
+        "id": "final_boston",
+        "type": "final_response_contains",
+        "weight": 0.2,
+        "any_of": [
+          "boston",
+          "fl-bos"
+        ]
+      },
+      {
+        "id": "ack_saturday",
+        "type": "spoken_contains",
+        "weight": 0.3,
+        "any_of": [
+          "saturday"
+        ],
+        "after_ms": 1000,
+        "before_ms": 2200
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1000,
+      "invalidated_calls": [
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "boston"
+            ],
+            "date": [
+              "friday"
+            ]
+          },
+          "invalid_after_ms": 1000
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.date": [
+          "saturday"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

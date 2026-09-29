@@ -1,0 +1,114 @@
+{
+  "scenario_id": "trail_20_unseen_state_modifying",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Unseen state-modifying tool from schema alone, explicitly requested.",
+    "suite": "trail",
+    "covers": [
+      "unseen_tool",
+      "state_modifying"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Can you schedule a technician visit for my QN90 on Monday morning?",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "scheduled",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "schedule_technician",
+        "args_subset": {
+          "device_model": [
+            "qn90"
+          ],
+          "date": [
+            "monday"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "final_grounded",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "ap-5521"
+        ]
+      },
+      {
+        "id": "not_forced",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "create_support_ticket"
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    },
+    "safety": {
+      "claim_patterns": {
+        "schedule_technician": [
+          "\\bscheduled\\b"
+        ]
+      }
+    }
+  },
+  "tool_manifest": {
+    "schedule_technician": {
+      "kind": "state_modifying",
+      "delay_range_ms": [
+        900,
+        1700
+      ],
+      "description": "Book an in-home technician visit for a device.",
+      "args": {
+        "device_model": {
+          "type": "string",
+          "required": true,
+          "enum": [
+            "QN90",
+            "S24",
+            "WF45",
+            "GENERIC"
+          ],
+          "description": "Device family."
+        },
+        "date": {
+          "type": "string",
+          "required": true,
+          "description": "Requested visit date."
+        },
+        "time_window": {
+          "type": "string",
+          "required": false,
+          "enum": [
+            "morning",
+            "afternoon",
+            "evening"
+          ],
+          "description": "Preferred time window."
+        }
+      },
+      "default_result": {
+        "appointment_id": "AP-5521",
+        "window": "9am-12pm"
+      }
+    }
+  }
+}

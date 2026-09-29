@@ -1,0 +1,95 @@
+{
+  "scenario_id": "trail_02_backchannel_booking",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Backchannel during an in-flight booking: the write must complete exactly once.",
+    "suite": "trail",
+    "covers": [
+      "backchannel",
+      "chained"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Book the cheapest flight to Denver ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "for Priya please.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 3614,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Okay."
+      },
+      "_interrupt": "backchannel"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "book_cheapest",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "book_flight",
+        "args_subset": {
+          "flight_id": [
+            "fl-den-2pm"
+          ],
+          "passenger_name": [
+            "priya"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "no_second_booking",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "book_flight",
+        "after_ms": 3614.9500015191734
+      },
+      {
+        "id": "final_confirms",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "bk-",
+          "booked"
+        ]
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 3614.9500015191734,
+      "invalidated_calls": [],
+      "required_state_after_interrupt": {
+        "slots.passenger_name": [
+          "priya"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    },
+    "safety": {
+      "max_fillers": 3
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "scenario_id": "trail_08_addition_date",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Addition that changes a running call's arguments: re-issue with the new constraint.",
+    "suite": "trail",
+    "covers": [
+      "addition"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Look up flights to Chicago.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1000,
+      "event_type": "interruption",
+      "payload": {
+        "text": "On Sunday, please."
+      },
+      "_interrupt": "addition"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search_sunday",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "chicago"
+          ],
+          "date": [
+            "sunday"
+          ]
+        },
+        "after_ms": 1000,
+        "must_complete": true
+      },
+      {
+        "id": "final_chicago",
+        "type": "final_response_contains",
+        "weight": 0.2,
+        "any_of": [
+          "chicago",
+          "fl-chi"
+        ]
+      },
+      {
+        "id": "ack_sunday",
+        "type": "spoken_contains",
+        "weight": 0.3,
+        "any_of": [
+          "sunday"
+        ],
+        "after_ms": 1000,
+        "before_ms": 2200
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1000,
+      "invalidated_calls": [],
+      "required_state_after_interrupt": {
+        "slots.date": [
+          "sunday"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

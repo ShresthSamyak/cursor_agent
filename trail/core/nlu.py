@@ -24,16 +24,20 @@ _FILLER_WORDS = {"uh", "um", "erm", "er", "hmm", "like", "you know", "so", "well
 _STOP_RE = re.compile(
     r"^\W*(?:(?:oh|ok(?:ay)?|no|wait|actually|sorry|um|uh|hey|please)[\s,.!]+)*"
     r"(?:stop(?: (?:it|that|talking|there|searching|everything))?|never\s*mind(?: that| it)?|forget (?:it|about it|that)|"
-    r"cancel (?:that|it|this|everything)|scratch that|abort|halt|don'?t (?:do|book|bother)(?: (?:it|that))?|"
+    r"cancel (?:that|it|this|everything)|scratch that|abort|halt|don'?t (?:do|book|bother|open|send|create|file|submit|pay|buy|order|make|go ahead|search)(?: (?:it|that|this|one))?|"
     r"leave it|skip it|no thanks|no thank you|that'?s all|drop it|quit)\b",
     re.I,
 )
 _ABANDON_RE = re.compile(
-    r"\b(?:forget|never\s*mind|scratch|drop|skip|ditch|cancel)\s+(?:about\s+)?(?:the|my|that|this)\s+"
+    r"\b(?:forget|never\s*mind|scratch|drop|ditch)\s+(?:about\s+)?(?:the|my|that|this)\s+"
     r"(flights?|booking|reservation|search|ticket|trip|hotel|car|weather|manual|tv|order|request|(?:\w+))\b"
-    r"|\binstead\b|\bforget (?:it|that|about it)\b|\bnever\s*mind\b",
+    r"|\bforget (?:it|that|about it)\b|\bnever\s*mind\b",
     re.I,
 )
+_NEGATED_CMD_RE = re.compile(
+    r"\b(?:don'?t|do not|never|no need to|stop)\s+(?:\w+\s+){0,2}?(?:open|book|search|send|create|file|submit|pay|buy|order|"
+    r"cancel|make|schedule|reserve|call|do)\b", re.I)
+_INSTEAD_RE = re.compile(r"\binstead\b|\brather than\b", re.I)
 _PAUSE_RE = re.compile(r"^\W*(?:wait|hold on|hang on|one sec(?:ond)?|just a (?:sec|second|moment)|pause)\W*$", re.I)
 _RESUME_RE = re.compile(r"^\W*(?:go on|continue|keep going|carry on|go ahead and continue|resume|as you were)\W*$", re.I)
 _BACK_TO_RE = re.compile(
@@ -44,7 +48,11 @@ _CONFIRM_RE = re.compile(
     r"confirm(?:ed)?|sounds good|ok(?:ay)?(?: do it)?|affirmative|book it|yes please|definitely|of course)\b",
     re.I,
 )
-_DENY_RE = re.compile(r"^\W*(?:no|nope|nah|not (?:that|really|quite)|wrong|incorrect|negative)\b", re.I)
+_DENY_RE = re.compile(
+    r"^\W*(?:(?:actually|oh|um+|uh+|well|hmm+)[\s,]+)?(?:no|nope|nah|not (?:that|really|quite|now)|wrong|incorrect|negative|don'?t)\b"
+    r"|\b(?:it'?s (?:fine|okay|ok|working) now|no need|not needed)\b",
+    re.I,
+)
 _REPAIR_RE = re.compile(
     r"\b(?:actually|i mean|i meant|sorry|no wait|wait|make (?:it|that)|change (?:it|that) to|switch (?:it )?to|"
     r"rather|correction|instead|scratch that|let'?s (?:do|make it|say)|how about|what about|on second thought)\b"
@@ -68,8 +76,8 @@ _DEICTIC_RE = re.compile(r"\b(?:this|that|these|those|here|it)\b(?:\s+(?:one|por
 
 _BOOK_RE = re.compile(r"\b(?:book|booking|reserve|reservation|buy|purchase|get me (?:a )?(?:seat|ticket)|hold (?:a|the) seat)\b", re.I)
 _FLIGHT_RE = re.compile(
-    r"\b(?:flights?|fly|flying|plane|airline|airfare|fares?|seats?|tickets?|nonstop|red-?eye|departures?|"
-    r"get (?:me )?to|head(?:ing)? to|travel(?:l?ing)? to|go(?:ing)? to|trip to|getaway to)\b", re.I)
+    r"\b(?:flights?|fly|flying|plane|airline|airfare|fares?|nonstop|red-?eye|departures?|"
+    r"(?:seats?|tickets?|trip|getaway) (?:to|from)|get (?:me )?to|head(?:ing)? to|travel(?:l?ing)? to|go(?:ing)? to)\b", re.I)
 _CANCEL_BOOKING_RE = re.compile(r"\bcancel\b[^.?!]{0,30}\b(?:booking|reservation|bk-\d+)\b|\bbk-\d+\b[^.?!]{0,20}\bcancel", re.I)
 _TICKET_RE = re.compile(
     r"\b(?:(?:open|file|create|raise|submit|log|start|make)\s+(?:a\s+|an\s+)?(?:support\s+|service\s+|repair\s+)?(?:ticket|case|request|complaint)|"
@@ -80,6 +88,10 @@ _DEVICE_ISSUE_RE = re.compile(
     r"keeps? (?:\w+ing)|blinking|flashing|error|error code|no signal|no sound|no picture|dead|cracked|overheating|frozen|"
     r"stuck|leaking|noise|troubleshoot|fix|reset|set ?up|connect|pair|install|manual|port|cable|button|led|light is|"
     r"used for|what'?s this for|what is this for)\b", re.I)
+_PROBLEM_RE = re.compile(
+    r"\b(?:broken|broke|not working|isn'?t working|doesn'?t work|stopped working|won'?t|keeps?|blinking|flashing|"
+    r"error|no signal|no sound|no picture|dead|cracked|overheating|frozen|stuck|leaking|noise|problem|issue|fault|"
+    r"fails?|failing|crash(?:es|ing)?)\b", re.I)
 _HOW_TO_RE = re.compile(r"\bhow (?:do|can|to|should) (?:i|we|you)\b", re.I)
 _QUESTION_RE = re.compile(r"\?\s*$|^\W*(?:what|which|who|whom|where|when|why|how|is|are|can|could|would|will|do|does|did|should|shall)\b", re.I)
 
@@ -87,7 +99,7 @@ _QUESTION_RE = re.compile(r"\?\s*$|^\W*(?:what|which|who|whom|where|when|why|how
 _PREF_RE = re.compile(
     r"\b(cheapest|cheaper|lowest(?: price| fare)?|least expensive|most affordable|budget|"
     r"earliest|earlier|first flight|latest|later one|last flight|fastest|shortest|"
-    r"first|second|third|last|other) (?:one|option|flight|fare)?", re.I)
+    r"first|second|third|last|other)\b(?:\s+(?:one|option|flight|fare))?", re.I)
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +224,11 @@ def parse(text: str) -> Parse:
     if abandon:
         acts.add("abandon")
         abandon_target = (abandon[1] or "").lower() or None
+    if _NEGATED_CMD_RE.search(text):
+        acts.add("stop")
+        acts.add("negated_cmd")
+    if _INSTEAD_RE.search(text):
+        acts.add("instead")
     if _PAUSE_RE.match(text):
         acts.add("pause")
     if _RESUME_RE.match(text):
@@ -311,10 +328,16 @@ def parse(text: str) -> Parse:
 
     # ---- intent ------------------------------------------------------------
     intent, domain, confidence = _intent(text, low, acts, slots, device, models)
+    if domain == "flight" and "destination" not in slots:
+        for key in ("place", "location"):
+            if key in slots and slots[key] != slots.get("origin"):
+                slots["destination"] = slots.pop(key)
+                break
     if domain == "device":
-        summary = issue_summary(text, device)
-        if summary:
-            slots["issue_summary"] = summary
+        if _PROBLEM_RE.search(text):
+            summary = issue_summary(text, device)
+            if summary:
+                slots["issue_summary"] = summary
         slots["severity"] = severity(text)
     return Parse(
         text=text, effective=effective, acts=frozenset(acts), intent=intent, domain=domain, slots=slots,
@@ -355,6 +378,8 @@ def _flight_pref(text: str, times: list[ent.TimeMention]) -> dict[str, Any] | No
 
 def _intent(text: str, low: str, acts: set[str], slots: dict[str, Any], device: str | None,
             models: tuple[str, ...]) -> tuple[str | None, str | None, float]:
+    if "back_to" in acts and len(low.split()) <= 6:
+        return None, None, 0.0
     has_place = any(k in slots for k in ("destination", "origin", "place", "location"))
     flight_words = bool(_FLIGHT_RE.search(text))
     book = bool(_BOOK_RE.search(text))

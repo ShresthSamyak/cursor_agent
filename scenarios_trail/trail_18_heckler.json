@@ -1,0 +1,173 @@
+{
+  "scenario_id": "trail_18_heckler",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L4",
+    "description": "Heckler: five interrupts in under ten seconds; state must end exactly right.",
+    "suite": "trail",
+    "covers": [
+      "heckler",
+      "correction",
+      "backchannel",
+      "addition"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find flights to Boston for Friday.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1000,
+      "event_type": "interruption",
+      "payload": {
+        "text": "No, actually Miami."
+      },
+      "_interrupt": "correction"
+    },
+    {
+      "timestamp_ms": 2300,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Mm-hm."
+      },
+      "_interrupt": "backchannel"
+    },
+    {
+      "timestamp_ms": 3700,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Wait, make that Chicago."
+      },
+      "_interrupt": "correction"
+    },
+    {
+      "timestamp_ms": 5200,
+      "event_type": "interruption",
+      "payload": {
+        "text": "And for two people."
+      },
+      "_interrupt": "addition"
+    },
+    {
+      "timestamp_ms": 6400,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Okay."
+      },
+      "_interrupt": "backchannel"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "final_chicago",
+        "type": "final_response_contains",
+        "weight": 0.35,
+        "any_of": [
+          "chicago",
+          "fl-chi"
+        ],
+        "after_ms": 3700
+      },
+      {
+        "id": "no_boston_after",
+        "type": "tool_not_called",
+        "weight": 0.15,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "boston"
+          ]
+        },
+        "after_ms": 1000
+      },
+      {
+        "id": "no_miami_after",
+        "type": "tool_not_called",
+        "weight": 0.15,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "miami"
+          ]
+        },
+        "after_ms": 3700
+      },
+      {
+        "id": "chicago_friday",
+        "type": "tool_called",
+        "weight": 0.35,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "chicago"
+          ],
+          "date": [
+            "friday"
+          ]
+        },
+        "must_complete": true
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1000,
+      "invalidated_calls": [
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "boston"
+            ]
+          },
+          "invalid_after_ms": 1000
+        },
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "miami"
+            ]
+          },
+          "invalid_after_ms": 3700
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.destination": [
+          "chicago"
+        ],
+        "slots.passengers": [
+          "2"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 3,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 4,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

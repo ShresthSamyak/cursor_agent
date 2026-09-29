@@ -1,0 +1,165 @@
+{
+  "scenario_id": "trail_11_detour_and_back",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Topic switch to weather, then 'back to the flight' with constraints intact.",
+    "suite": "trail",
+    "covers": [
+      "topic_switch",
+      "resume"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find flights to Boston ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "for Friday.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1500,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Wait, what's the weather in Boston right now?"
+      },
+      "_interrupt": "topic_switch"
+    },
+    {
+      "timestamp_ms": 4346,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Okay, back to the flight.",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "weather",
+        "type": "tool_called",
+        "weight": 0.2,
+        "tool": "weather_lookup",
+        "args_subset": {
+          "city": [
+            "boston"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "weather_answer",
+        "type": "final_response_contains",
+        "weight": 0.15,
+        "any_of": [
+          "sunny",
+          "74"
+        ]
+      },
+      {
+        "id": "resumed_search",
+        "type": "tool_called",
+        "weight": 0.3,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "boston"
+          ],
+          "date": [
+            "friday"
+          ]
+        },
+        "after_ms": 4346.182160452008,
+        "must_complete": true
+      },
+      {
+        "id": "final_flights",
+        "type": "final_response_contains",
+        "weight": 0.2,
+        "any_of": [
+          "fl-bos"
+        ],
+        "after_ms": 4346.182160452008
+      },
+      {
+        "id": "date_kept",
+        "type": "state_snapshot",
+        "weight": 0.15,
+        "path": "slots.date",
+        "any_of": [
+          "friday"
+        ]
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1500,
+      "invalidated_calls": [],
+      "required_state_after_interrupt": {
+        "slots.destination": [
+          "boston"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 2,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 3,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  },
+  "tool_manifest": {
+    "weather_lookup": {
+      "kind": "read_only",
+      "delay_range_ms": [
+        900,
+        1800
+      ],
+      "description": "Current weather and a short forecast for a city.",
+      "args": {
+        "city": {
+          "type": "string",
+          "required": true,
+          "description": "City name."
+        },
+        "units": {
+          "type": "string",
+          "required": false,
+          "enum": [
+            "metric",
+            "imperial"
+          ],
+          "description": "Temperature units (default imperial)."
+        }
+      },
+      "default_result": {
+        "condition": "sunny",
+        "temp_f": 74,
+        "forecast": "clear skies through Friday"
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "scenario_id": "trail_16_ticket_declined",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Offer declined at the commit barrier: the irreversible call never fires.",
+    "suite": "trail",
+    "covers": [
+      "commit_barrier",
+      "cancel"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "My S24 phone won't charge.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 3687,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "No thanks, it's fine now.",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "manual",
+        "type": "tool_called",
+        "weight": 0.3,
+        "tool": "lookup_manual",
+        "args_subset": {
+          "device_model": [
+            "s24"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "no_ticket",
+        "type": "tool_not_called",
+        "weight": 0.4,
+        "tool": "create_support_ticket"
+      },
+      {
+        "id": "acknowledged",
+        "type": "spoken_contains",
+        "weight": 0.3,
+        "any_of": [
+          "okay",
+          "won't"
+        ],
+        "after_ms": 3687.0620890520513
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

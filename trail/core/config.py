@@ -34,7 +34,7 @@ class RuntimeConfig:
     features: Features = field(default_factory=Features)
     # Arbiter: the kit penalises fillers beyond 4 (3 in some scenarios) and
     # verbatim repeats, so the agent keeps its own budget below both.
-    filler_budget: int = 3
+    filler_budget: int = 4
     # Virtual ms after a user turn ends by which *something* real is said.
     speak_by_ms: float = 450.0
     # Read-only retries after an error result.

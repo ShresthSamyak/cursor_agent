@@ -1,0 +1,91 @@
+{
+  "scenario_id": "trail_17_ticket_interrupted",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Interrupt during an irreversible call before it commits: cancel it.",
+    "suite": "trail",
+    "covers": [
+      "cancel",
+      "irreversible"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Please open a support ticket for my QN90, the screen has no picture.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 713,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Wait, don't open that ticket."
+      },
+      "_interrupt": "cancel"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "not_reissued",
+        "type": "tool_not_called",
+        "weight": 0.4,
+        "tool": "create_support_ticket",
+        "after_ms": 713.1442419998348
+      },
+      {
+        "id": "no_false_claim",
+        "type": "spoken_not_contains",
+        "weight": 0.3,
+        "any_of": [
+          "tk-",
+          "ticket created",
+          "opened ticket"
+        ]
+      },
+      {
+        "id": "acknowledged",
+        "type": "spoken_contains",
+        "weight": 0.3,
+        "any_of": [
+          "stopped",
+          "okay"
+        ],
+        "after_ms": 713.1442419998348
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 713.1442419998348,
+      "invalidated_calls": [
+        {
+          "tool": "create_support_ticket",
+          "args_subset": {},
+          "invalid_after_ms": 713.1442419998348
+        }
+      ],
+      "required_state_after_interrupt": {
+        "intent": [
+          "none"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

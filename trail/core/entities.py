@@ -409,7 +409,7 @@ _NAME_PATTERNS = (
     re.compile(rf"\bpassenger(?:'s)?(?:\s+name)?(?:\s+is|:)?\s+({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)"),
     re.compile(rf"\b(?:[Nn]ame\s+is|[Nn]ame's|under\s+(?:the\s+name\s+(?:of\s+)?)?)\s*({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)"),
     re.compile(rf"\b(?:[Ii]t's|[Ii]t is|[Tt]his is|[Ii]'m|[Ii] am)\s+for\s+({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)"),
-    re.compile(rf"\b(?:book|reserve|get|buy|hold|put)\b[^.?!]{{0,40}}?\bfor\s+({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)"),
+    re.compile(rf"\b(?i:book|reserve|get|buy|hold|put)\b[^.?!]{{0,48}}?\b(?i:for)\s+({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)"),
     re.compile(rf"\bfor\s+({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)\s*(?:[.!?,]|$)"),
     re.compile(rf"\b(?:[Mm]ake it|[Mm]ake that|[Ss]witch it to|[Cc]hange it to|[Ii]nstead)\s+(?:for\s+)?({_NAME_TOKEN}(?:\s+{_NAME_TOKEN})?)\s*(?:[.!?,]|$)"),
 )
@@ -435,13 +435,22 @@ def find_person(text: str, *, exclude: Iterable[str] = ()) -> str | None:
     return None
 
 
+_COMMON_WORDS = {
+    "okay", "ok", "yes", "yeah", "yep", "yup", "no", "nope", "sure", "thanks", "thank", "great", "fine", "cool",
+    "right", "wait", "hmm", "hello", "hi", "hey", "please", "stop", "cancel", "actually", "never", "mind", "maybe",
+    "sorry", "good", "nice", "perfect", "alright", "done", "go", "on", "ahead", "continue", "what", "why", "how",
+    "anyone", "someone", "nobody", "whatever", "correct", "exactly", "later", "again", "mm", "mhm", "uh", "um",
+    "huh", "oh", "ah", "wow", "hold", "same", "that", "this", "it", "here", "there", "book", "flight", "search",
+}
+
+
 def bare_name(text: str) -> str | None:
     """A reply that is just a name, e.g. to "what name should I book under?"."""
     t = re.sub(r"^(?:it's|it is|that's|the name is|name is|for|um+|uh+|oh)\s+", "", text.strip(), flags=re.I)
     t = t.strip(" .!?,")
     words = t.split()
     if 1 <= len(words) <= 3 and all(re.fullmatch(r"[A-Za-zà-ÿ'’-]+", w) for w in words):
-        if not any(w.lower() in _NAME_STOP or _is_temporal(w) for w in words) and not canonical_city(t):
+        if not any(w.lower() in _NAME_STOP or w.lower() in _COMMON_WORDS or _is_temporal(w) for w in words)                 and not canonical_city(t):
             return " ".join(w[:1].upper() + w[1:] for w in words)
     return None
 
@@ -508,7 +517,9 @@ def confusable_cities(city: str, limit: int = 2) -> list[str]:
         dist = _edit_distance(key, okey)
         tail = 0 if key[-2:] == okey[-2:] else 1
         vowel_tail = 0 if city.lower()[-3:-1] == other.lower()[-3:-1] or city.lower()[-2:] == other.lower()[-2:] else 1
-        if dist <= 1 and abs(len(key) - len(okey)) <= 1:
+        vowel_start = city[0].lower() in "aeiou" or other[0].lower() in "aeiou"
+        same_onset = key[0] == okey[0]
+        if dist <= 1 and abs(len(key) - len(okey)) <= 1 and key[-2:] == okey[-2:] and (vowel_start or same_onset)                 and abs(len(city) - len(other)) <= 2:
             scored.append((dist + tail + 0.5 * vowel_tail, other))
     scored.sort()
     return [name for _, name in scored[:limit]]

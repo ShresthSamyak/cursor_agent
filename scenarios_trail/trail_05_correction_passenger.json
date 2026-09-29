@@ -1,0 +1,116 @@
+{
+  "scenario_id": "trail_05_correction_passenger",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Passenger correction while booking: only the booking step re-runs; the search is reused.",
+    "suite": "trail",
+    "covers": [
+      "correction",
+      "slot_dependency",
+      "reversible_rollback"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find a flight to Austin and ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "book the 8 AM one for Maya.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 3746,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Wait, put it under Leo instead."
+      },
+      "_interrupt": "correction"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search_once",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "flight_search",
+        "after_ms": 3746.3329187361524
+      },
+      {
+        "id": "book_leo",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "book_flight",
+        "args_subset": {
+          "flight_id": [
+            "fl-aus-8am"
+          ],
+          "passenger_name": [
+            "leo"
+          ]
+        },
+        "after_ms": 3746.3329187361524,
+        "must_complete": true
+      },
+      {
+        "id": "final_leo",
+        "type": "final_response_contains",
+        "weight": 0.15,
+        "any_of": [
+          "leo"
+        ]
+      },
+      {
+        "id": "final_ref",
+        "type": "final_response_contains",
+        "weight": 0.15,
+        "any_of": [
+          "bk-"
+        ]
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 3746.3329187361524,
+      "invalidated_calls": [
+        {
+          "tool": "book_flight",
+          "args_subset": {
+            "passenger_name": [
+              "maya"
+            ]
+          },
+          "invalid_after_ms": 3746.3329187361524
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.passenger_name": [
+          "leo"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 2,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

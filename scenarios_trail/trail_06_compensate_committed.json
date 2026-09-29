@@ -1,0 +1,103 @@
+{
+  "scenario_id": "trail_06_compensate_committed",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Correction after the booking committed: compensate (cancel it) and rebook, never duplicate.",
+    "suite": "trail",
+    "covers": [
+      "correction",
+      "compensation"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find a flight to Miami and ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "book the 2 PM one for Nina.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 5135,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Oh wait, the ticket should be for Sam, not Nina."
+      },
+      "_interrupt": "correction"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "compensated",
+        "type": "tool_called",
+        "weight": 0.35,
+        "tool": "cancel_booking",
+        "args_subset": {
+          "booking_id": [
+            "bk-0001"
+          ]
+        },
+        "after_ms": 5135.867298138328,
+        "must_complete": true
+      },
+      {
+        "id": "rebooked_sam",
+        "type": "tool_called",
+        "weight": 0.4,
+        "tool": "book_flight",
+        "args_subset": {
+          "flight_id": [
+            "fl-mia-2pm"
+          ],
+          "passenger_name": [
+            "sam"
+          ]
+        },
+        "after_ms": 5135.867298138328,
+        "must_complete": true
+      },
+      {
+        "id": "final_sam",
+        "type": "final_response_contains",
+        "weight": 0.25,
+        "any_of": [
+          "sam"
+        ]
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 5135.867298138328,
+      "invalidated_calls": [],
+      "required_state_after_interrupt": {
+        "slots.passenger_name": [
+          "sam"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 2,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}
