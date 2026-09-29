@@ -330,7 +330,7 @@ def build_args(spec: ToolSpec, ctx: ArgContext) -> tuple[dict[str, Any], list[st
 
 def _value_for(arg: ArgSpec, ctx: ArgContext, spec: ToolSpec) -> Any:
     slots = ctx.slots
-    if arg.name in slots and slots[arg.name] not in (None, ""):
+    if arg.name in slots and slots[arg.name] not in (None, "") and _compatible(arg, slots[arg.name]):
         return _coerce(arg, slots[arg.name])
     cls = arg_class(arg)
     text = ctx.text
@@ -395,6 +395,18 @@ def _value_for(arg: ArgSpec, ctx: ArgContext, spec: ToolSpec) -> Any:
     if arg.required and arg.type == "string":
         return None
     return None
+
+
+def _compatible(arg: ArgSpec, value: Any) -> bool:
+    if arg.type == "object":
+        return isinstance(value, dict)
+    if arg.type == "array":
+        return isinstance(value, list)
+    if arg.type in {"number", "integer"}:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) or (isinstance(value, str) and value.replace(".", "", 1).isdigit())
+    if arg.type == "boolean":
+        return isinstance(value, bool)
+    return isinstance(value, (str, int, float)) and not isinstance(value, bool)
 
 
 def _partial(obj: dict[str, Any]) -> None:
@@ -475,6 +487,7 @@ def _count_value(arg: ArgSpec, ctx: ArgContext) -> Any:
 def _query_text(ctx: ArgContext) -> str:
     base = ctx.parse.effective if ctx.parse else ctx.text
     base = re.sub(r"^\W*(?:hey|hi|so|um+|uh+|okay|ok|well|please)[,\s]+", "", base, flags=re.I).strip()
+    base = re.sub(r"^(?:forget|never\s*mind|scratch|drop)\s+(?:about\s+)?(?:the|my|that|this)\s+\w+[,.;]?\s*", "", base, flags=re.I).strip()
     if ctx.visual_subject:
         return f"{ctx.visual_subject}: {base}" if base else ctx.visual_subject
     return base

@@ -31,12 +31,15 @@ class GeminiLLM:
         self.model = model
         self.name = f"gemini:{model}"
         self._client = None
+        self._loop = None
 
     def _c(self):
-        if self._client is None:
+        loop = asyncio.get_running_loop()
+        if self._client is None or self._loop is not loop:
             from google import genai
 
             self._client = genai.Client(api_key=self._key)
+            self._loop = loop
         return self._client
 
     async def warm(self) -> bool:
@@ -97,13 +100,16 @@ class OpenAICompatLLM:
         self.name = f"openai-compat:{model}"
         self.supports_images = vision
         self._client = None
+        self._loop = None
 
     def _http(self):
         import httpx
 
-        if self._client is None:
+        loop = asyncio.get_running_loop()
+        if self._client is None or self._loop is not loop:
             self._client = httpx.AsyncClient(base_url=self.base_url, timeout=httpx.Timeout(30.0, connect=3.0),
                                              headers={"Authorization": f"Bearer {self._key}"})
+            self._loop = loop
         return self._client
 
     async def warm(self) -> bool:

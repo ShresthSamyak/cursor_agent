@@ -19,8 +19,6 @@ from . import entities as ent
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _WHISPER = None
-_WHISPER_LOCK = asyncio.Lock() if hasattr(asyncio, "Lock") else None
-_WHISPER_NAME = os.environ.get("TRAIL_WHISPER", "base.en")
 
 
 def resolve_media(ref: str | None) -> Path | None:
@@ -67,33 +65,65 @@ class Transcript:
         return min(probs) if probs else 1.0
 
 
-def _load_whisper(name: str):
+def _cuda_dll_dirs() -> list[str]:
+    """Where CUDA 12 / cuDNN 9 runtime DLLs may already live (pip wheels or a PyTorch install)."""
+    import sys
+
+    found: list[str] = []
+    env = os.environ.get("TRAIL_CUDA_DLL_DIR")
+    if env:
+        found.extend(p for p in env.split(os.pathsep) if p)
+    roots = {Path(p) for p in sys.path if p} | {Path(sys.base_prefix) / "Lib" / "site-packages",
+                                                 Path(sys.prefix) / "Lib" / "site-packages"}
+    for root in roots:
+        try:
+            for sub in ("nvidia/cublas/bin", "nvidia/cudnn/bin", "nvidia/cuda_runtime/bin", "torch/lib"):
+                d = root / sub
+                if (d / "cublas64_12.dll").exists() or (d / "cudnn_ops64_9.dll").exists() or sub.startswith("nvidia") and d.is_dir():
+                    found.append(str(d))
+        except OSError:
+            continue
+    return list(dict.fromkeys(found))
+
+
+def _load_whisper(name: str | None):
     from faster_whisper import WhisperModel
 
     device, compute = "cpu", "int8"
+    want = os.environ.get("TRAIL_WHISPER_DEVICE", "auto")
     try:
         import ctranslate2
 
-        if ctranslate2.get_cuda_device_count() > 0 and os.environ.get("TRAIL_WHISPER_DEVICE", "auto") != "cpu":
+        if want != "cpu" and ctranslate2.get_cuda_device_count() > 0:
+            if os.name == "nt":
+                for d in _cuda_dll_dirs():
+                    try:
+                        os.add_dll_directory(d)
+                        os.environ["PATH"] = d + os.pathsep + os.environ.get("PATH", "")
+                    except OSError:
+                        pass
             device, compute = "cuda", "float16"
     except Exception:
         pass
-    try:
-        model = WhisperModel(name, device=device, compute_type=compute)
-        if device == "cuda":
-            # Surface missing CUDA runtime DLLs now rather than on the first turn.
-            list(model.transcribe(_silence_wav(), language="en")[0])
-        return model
-    except Exception:
-        if device != "cpu":
-            return WhisperModel(name, device="cpu", compute_type="int8")
-        raise
+    # small.en is accurate and ~0.2 s on a laptop GPU; base.en keeps CPU-only hosts inside the budget.
+    chosen = name or ("small.en" if device == "cuda" else "base.en")
+    if device == "cuda":
+        try:
+            model = WhisperModel(chosen, device="cuda", compute_type=compute)
+            list(model.transcribe(_silence_wav(), language="en")[0])   # surface missing DLLs now
+            return model, "cuda", chosen
+        except Exception:
+            chosen = name or "base.en"
+    return WhisperModel(chosen, device="cpu", compute_type="int8"), "cpu", chosen
 
 
 def _silence_wav() -> Any:
     import numpy as np
 
     return np.zeros(16000, dtype="float32")
+
+
+STT_INFO: dict[str, str] = {}
 
 
 async def load_stt() -> bool:
@@ -103,9 +133,11 @@ async def load_stt() -> bool:
     if os.environ.get("TRAIL_STT", "whisper") == "none":
         return False
     try:
-        _WHISPER = await asyncio.to_thread(_load_whisper, _WHISPER_NAME)
+        model, device, name = await asyncio.to_thread(_load_whisper, os.environ.get("TRAIL_WHISPER") or None)
+        _WHISPER = model
+        STT_INFO.update(device=device, model=name)
         # Warm the decoder once so the first real clip is not slow.
-        await asyncio.to_thread(lambda: list(_WHISPER.transcribe(_silence_wav(), language="en")[0]))
+        await asyncio.to_thread(lambda: list(model.transcribe(_silence_wav(), language="en")[0]))
         return True
     except Exception:
         _WHISPER = None
@@ -116,26 +148,44 @@ def stt_ready() -> bool:
     return _WHISPER is not None
 
 
-def _transcribe_sync(path: str) -> Transcript:
+def asr_prompt(tool_names: list[str], enums: list[str]) -> str:
+    """Domain vocabulary for decoding: what this assistant can do and the places it knows.
+
+    Built from the tool manifest and the gazetteer, never from scenario text.
+    """
+    actions = ", ".join(n.replace("_", " ") for n in tool_names[:12]) or "book a flight, find flights"
+    places = ", ".join(ent.city_names()[:40])
+    models = f" Device models: {', '.join(enums[:12])}." if enums else ""
+    return f"Voice requests to an assistant that can: {actions}. Places: {places}.{models}"
+
+
+def _transcribe_sync(path: str, prompt: str | None) -> Transcript:
+    kw = {"initial_prompt": prompt} if prompt else {}
     segments, _info = _WHISPER.transcribe(
         path, language="en", beam_size=5, word_timestamps=True, vad_filter=False,
-        condition_on_previous_text=False, temperature=0.0,
-    )
+        condition_on_previous_text=False, temperature=0.0, **kw)
     segments = list(segments)
+    kept = []
+    for i, s in enumerate(segments):
+        probs = [float(w.probability) for w in (s.words or [])]
+        # Trailing low-confidence fragments are decoder hallucinations (often echoes of the prompt).
+        if i > 0 and s.avg_logprob < -1.0 and (not probs or max(probs) < 0.3):
+            continue
+        kept.append(s)
     words: list[tuple[str, float]] = []
-    for s in segments:
+    for s in kept:
         for w in s.words or []:
             words.append((w.word.strip(), float(w.probability)))
-    text = " ".join(s.text.strip() for s in segments).strip()
-    avg = sum(s.avg_logprob for s in segments) / len(segments) if segments else -5.0
+    text = " ".join(s.text.strip() for s in kept).strip()
+    avg = sum(s.avg_logprob for s in kept) / len(kept) if kept else -5.0
     return Transcript(text=text, words=words, avg_logprob=avg)
 
 
-async def transcribe(path: Path, llm=None, *, timeout: float = 8.0) -> Transcript | None:
+async def transcribe(path: Path, llm=None, *, timeout: float = 8.0, prompt: str | None = None) -> Transcript | None:
     """Local whisper first (word confidences); a cloud audio model otherwise."""
     if _WHISPER is not None:
         try:
-            return await asyncio.to_thread(_transcribe_sync, str(path))
+            return await asyncio.to_thread(_transcribe_sync, str(path), prompt)
         except Exception:
             pass
     if llm is not None and getattr(llm, "supports_audio", False):
@@ -236,6 +286,9 @@ async def describe_frame(path: Path, llm, *, question: str | None = None, timeou
         return None
     if not isinstance(out, dict):
         return None
+    for key in ("device_model", "focus", "device_type"):
+        if isinstance(out.get(key), str) and out[key].strip().lower() in {"", "null", "none", "unknown", "n/a"}:
+            out[key] = None
     focus = out.get("focus")
     if isinstance(focus, str):
         out["focus"] = _clean_focus(focus)

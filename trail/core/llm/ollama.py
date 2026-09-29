@@ -25,12 +25,17 @@ class OllamaLLM:
         self.name = f"ollama:{model}"
         self.supports_images = bool(vision_model)
         self._client = None
+        self._loop = None
 
     def _http(self):
+        import asyncio
         import httpx
 
-        if self._client is None:
+        loop = asyncio.get_running_loop()
+        # One client per event loop: the kit runs each scenario in a fresh loop.
+        if self._client is None or self._loop is not loop:
             self._client = httpx.AsyncClient(base_url=self.url, timeout=httpx.Timeout(30.0, connect=2.0))
+            self._loop = loop
         return self._client
 
     async def available_models(self) -> set[str]:

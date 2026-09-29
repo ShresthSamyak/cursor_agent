@@ -210,10 +210,18 @@ class Runtime:
             return False
         if kind == ACK:
             self.metrics.fillers += 1
+        t = self.turn
+        # Fixed hold rather than a clock estimate: early delivery also skews the estimated scale.
+        early = 30.0 if (t is not None and not t.responded and self.config.mode == "harness") else 0.0
         self._mark_responded()
         self.last_output = text if kind != ACK else self.last_output
         if self.config.mode == "desktop" and kind == FINAL:
             self._stream(text)
+        elif early > 0:
+            # The harness can deliver an event a few ms before its timestamp (timer granularity);
+            # a reply stamped earlier than the turn it answers is not counted, so hold it briefly.
+            snapshot = self._snapshot()
+            self._timer(f"emit:{t.seq}:{kind}", min(early, 60.0), "emit", self._deps("turn"), (kind, text, snapshot))
         else:
             self._out("speak", kind=kind, text=text, snapshot=self._snapshot())
         self._audit("say", kind=kind, text=text)
@@ -477,11 +485,20 @@ class Runtime:
             turn.kind = "audio"
             self._timer(f"speak_by:{turn.seq}", self.config.speak_by_ms, "speak_by", self._deps("turn"), turn.seq)
 
+    def _asr_prompt(self) -> str:
+        enums = []
+        for spec in self.manifest.tools.values():
+            for a in spec.args:
+                for arg in (a, *a.properties):
+                    if "model" in arg.name and arg.enum:
+                        enums.extend(str(e) for e in arg.enum)
+        return media.asr_prompt(list(self.manifest.tools), list(dict.fromkeys(enums)))
+
     async def _stt_worker(self, part: AudioPart, deps) -> None:
         tr = None
         if part.path is not None:
             timeout = self.config.media_timeout_ms / 1000.0 / max(self.clock.scale, 0.5) + 4
-            tr = await media.transcribe(part.path, self.llm, timeout=timeout)
+            tr = await media.transcribe(part.path, self.llm, timeout=timeout, prompt=self._asr_prompt())
         self._post("transcript", deps, (part, tr))
 
     def _on_transcript(self, part: AudioPart, tr: media.Transcript | None) -> None:
@@ -563,6 +580,7 @@ class Runtime:
         elif p.kind == "vision_timeout":
             if self.frame and self.frame.vision_state == "pending":
                 self.frame.vision_state = "failed"
+                self._audit("vision", result="timeout")
                 self._reconcile_waiting("vision")
         elif p.kind == "speak_by":
             t = self.turn
@@ -570,6 +588,9 @@ class Runtime:
                 self._say(ACK, nlg.neutral_ack(self.arbiter.fillers_spoken))
         elif p.kind == "llm_route":
             self._on_model_route(p.payload)
+        elif p.kind == "emit":
+            kind, text, snapshot = p.payload
+            self._out("speak", kind=kind, text=text, snapshot=snapshot)
         elif p.kind == "stream_done":
             self._speaking_text = None
         elif p.kind == "tool_exec":
@@ -999,6 +1020,10 @@ class Runtime:
             elif slot == "issue_summary":
                 if len(parse.text.split()) >= 2:
                     filled |= goal.set_slot("issue_summary", nlu.issue_summary(parse.text, parse.device) or parse.text)
+            elif slot == "visual_subject":
+                if len(parse.text.split()) <= 12:
+                    goal.slots["_subject"] = re.sub(r"^(?:it'?s|it is|the|that'?s|that is)\s+", "", parse.text.strip(" .!?"), flags=re.I)
+                    filled = True
             elif slot == "booking_id":
                 if parse.slots.get("booking_id"):
                     filled |= goal.set_slot("booking_id", parse.slots["booking_id"])
@@ -1074,6 +1099,15 @@ class Runtime:
             goal.awaiting_media = "embedding"
             self._ack(goal, reason, changed)
             return
+        if goal.slots.get("_subject"):
+            env.visual_subject = goal.slots["_subject"]
+        elif (goal.domain == "device" and goal.parse is not None and goal.parse.deictic and self.frame is not None
+              and self.frame.vision_state == "failed" and not goal.parse.model_tokens and "_asked_subject" not in goal.slots):
+            # We cannot see what the user points at: ask rather than answer about the wrong part.
+            goal.slots["_asked_subject"] = True
+            self._ask(goal, ("visual_subject",), "I can't quite make out which part you mean from the camera. "
+                                                  "What's it labeled, or what does it look like?")
+            return
         plan = make_plan(goal, env)
         for k, v in plan.derived.items():
             if v is not None and goal.slots.get(k) != v:
@@ -1094,6 +1128,9 @@ class Runtime:
             if step.wait_for == "vision":
                 goal.awaiting_media = "vision"
                 self._ack(goal, reason, changed, text="Let me take a look and check the manual.")
+                # Bound the wait from the question, not the frame, so the answer still lands in time.
+                if f"vision_wait:{goal.id}" not in self._timers:
+                    self._timer(f"vision_wait:{goal.id}", 3500.0, "vision_timeout", self._deps("frame"))
                 return
             if step.missing or step.args is None:
                 if live is not None and live.status == IN_FLIGHT:
@@ -1369,14 +1406,13 @@ class Runtime:
             r = results.get("ticket")
             return nlg.ticket_answer(goal, r or {}, plan.steps[0].args or {}) if r is not None else ""
         if goal.intent == "device_support":
-            if question:
-                return question
             r = results.get("lookup")
             if r is None:
-                return ""
-            subject = self.frame.subject if self.frame and goal.epochs.get("_frame_seq") else None
+                return question or ""
+            subject = goal.slots.get("_subject") or (self.frame.subject if self.frame and goal.epochs.get("_frame_seq") else None)
             args = plan.steps[0].args or {}
-            return nlg.manual_answer(goal, r, subject, args.get("device_model"))
+            answer = nlg.manual_answer(goal, r, subject, args.get("device_model"))
+            return f"{answer} {question}" if question else answer
         if goal.tool:
             if question:
                 return question

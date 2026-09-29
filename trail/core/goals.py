@@ -324,6 +324,7 @@ def _plan_cancel(goal: Goal, env: PlanEnv) -> Plan:
 def visual_query(goal: Goal, env: PlanEnv) -> str:
     base = goal.parse.effective if goal.parse else goal.text
     base = re.sub(r"^\W*(?:hey|hi|so|um+|uh+|okay|ok|well|please)[,\s]+", "", base, flags=re.I).strip()
+    base = re.sub(r"^(?:forget|never\s*mind|scratch|drop)\s+(?:about\s+)?(?:the|my|that|this)\s+\w+[,.;]?\s*", "", base, flags=re.I).strip()
     subject = env.visual_subject
     if subject:
         # Replace the deictic with what the frame shows: "what is this port" -> "what is the HDMI port".

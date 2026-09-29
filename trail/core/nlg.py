@@ -326,12 +326,10 @@ def manual_answer(goal: Goal, result: dict[str, Any], subject: str | None, devic
             use = text
             break
     if subject and use:
-        lead = f"That's the {subject.strip()}. It's used for {use}."
-    elif subject:
-        lead = f"That looks like the {subject.strip()}."
-    else:
-        lead = f"The best match is “{title}”."
-    return f"{lead} See {cite}, “{title}”, in the manual."
+        return f"That's the {subject.strip()}. It's used for {use}. The {doc} covers it on page {page}, “{title}”."
+    if subject:
+        return f"That looks like the {subject.strip()}. The {doc} covers it on page {page}, “{title}”."
+    return f"The {doc} covers this on page {page}, under “{title}”." if page is not None else f"Check “{title}” in the {doc}."
 
 
 def ticket_answer(goal: Goal, result: dict[str, Any], args: dict[str, Any]) -> str:
@@ -473,7 +471,7 @@ def stopped_text(goal: Goal | None, rolled_back: list[str], held: list[str]) -> 
         notes.append(_join(held) + " already went through and can't be undone")
     if goal.domain == "flight" and not rolled_back and not held:
         notes.append("no booking was made")
-    tail = (" " + "; ".join(notes) + ".") if notes else ""
+    tail = (" " + _cap("; ".join(notes)) + ".") if notes else ""
     return f"Okay, I've stopped.{tail}".replace(".;", ";")
 
 
