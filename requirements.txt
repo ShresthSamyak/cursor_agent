@@ -1,0 +1,11 @@
+# Runtime (the kit evaluator installs submission.yaml's list; this file is for local setup).
+pydantic>=2.12,<3
+httpx>=0.27
+numpy>=1.26
+pillow>=10
+faster-whisper>=1.1
+av>=12,<15
+google-genai>=1.0
+websockets>=12
+matplotlib>=3.8
+pytest>=8,<10

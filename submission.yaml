@@ -1,0 +1,20 @@
+# Trail - interruptible agent submission (docs/kit/SUBMISSION.md).
+# Replace the team name with your registered one before submitting.
+team: "Trail"
+entry_point: "agent.agent:ParticipantAgent"
+python: "3.12"
+
+requirements:
+  - pydantic>=2.12,<3
+  - httpx>=0.27
+  - numpy>=1.26
+  - pillow>=10
+  - faster-whisper>=1.1
+  - av>=12,<15
+  - google-genai>=1.0
+
+env:
+  # Optional. Values are registered on the event portal, never committed.
+  # With neither key, the agent runs on rules + local speech-to-text alone.
+  - SECRET_GEMINI_API_KEY
+  - SECRET_OPENROUTER_API_KEY
