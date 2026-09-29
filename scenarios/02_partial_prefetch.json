@@ -1,0 +1,14 @@
+{
+  "name": "Start retrieval from partial speech, publish only after final text",
+  "steps": [
+    {"send": {"type": "dwell", "app": "chrome", "target": {"text": "Monday INR 4,500", "context": "Chandigarh to Goa"}}},
+    {"send": {"type": "vad_start"}},
+    {"send": {"type": "speech_partial", "text": "Which flight is cheapest?"}},
+    {"wait_for": "turn_started"},
+    {"send": {"type": "vad_end"}},
+    {"send": {"type": "speech_final", "text": "Which flight is cheapest?"}},
+    {"wait_for": "done"}
+  ],
+  "expect_text": ["Monday is cheapest at INR 4,500"],
+  "expect_events": ["duck", "unduck", "done"]
+}
