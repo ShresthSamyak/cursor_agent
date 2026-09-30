@@ -58,6 +58,15 @@ def test_trail_interruption_suite(path):
     assert all(isinstance(f.get("state_snapshot"), dict) for f in finals)
 
 
+@pytest.mark.parametrize("path", sorted((ROOT / "scenarios_stress").glob("*.json")), ids=lambda p: p.stem)
+def test_hidden_style_stress_suite(path):
+    trace, score, agent = run_kit(load(path))
+    if score["total"] < 98.0:
+        trace, score, agent = run_kit(load(path))     # one retry for replay-speed timer jitter
+    assert score["total"] >= 98.0, score
+    assert agent.runtime.metrics.errors == 0
+
+
 @pytest.mark.parametrize("template, seed", [("simple_search", 7), ("search_interrupt", 1), ("search_interrupt", 42),
                                             ("unseen_tool", 3), ("unseen_tool", 11)])
 def test_generated_reskins(template, seed):

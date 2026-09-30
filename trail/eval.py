@@ -31,7 +31,8 @@ def _load(paths: list[Path]) -> list[dict]:
 def scenario_paths(which: str) -> list[Path]:
     pub = sorted((ROOT / "scenarios").glob("*.json"))
     own = sorted((ROOT / "scenarios_trail").glob("*.json"))
-    return {"public": pub, "trail": own, "all": pub + own}[which]
+    stress = sorted((ROOT / "scenarios_stress").glob("*.json"))
+    return {"public": pub, "trail": own, "stress": stress, "all": pub + own, "everything": pub + own + stress}[which]
 
 
 def agent_class(features=None, *, base=None):

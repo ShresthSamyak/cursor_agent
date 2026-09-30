@@ -25,11 +25,12 @@ The PDF's three differentiators and where they live:
 
 | Evidence | Result | Where |
 | --- | --- | --- |
-| **Official evaluator** `eval_submission.py . --reps 3` (time scale 1, real models) | **Weighted 100.0 / 100**, all 9 public scenarios 100 on all 3 reps (27/27 runs) | `reports/eval_submission_scale1.txt/.json` |
+| **Official evaluator** `eval_submission.py . --reps 3` (time scale 1, real models) | **Weighted 100.0 / 100**, 27/27 runs at 100 — re-verified after all desktop + stress changes | `reports/eval_submission_scale1.txt/.json` |
 | `run_local.py --all --time-scale 1` with models (2 consecutive runs) | 100.0 / 100 both runs | console (re-run to reproduce) |
 | Kit reference agent (for comparison) | ~52–57 / 100 per kit docs | `agent/baseline.py` (`--agent agent.agent:BaselineAgent`) |
 | Trail's own interruption suite (20 scenarios, kit format), rules only, scale 4 | 99.4 average (19 × 100, trail_03 99.8, trail_14 89.1 in that run) | `reports/metrics_rules.md` |
-| Unit + e2e tests `pytest` (rules only, deterministic) | **87 passed** | `tests/` |
+| Unit + e2e tests `pytest` (rules only, deterministic) | **105 passed** (incl. 18 stress cases) | `tests/` |
+| Hidden-style stress suite (18), rules only | 18/18 at 100 | `scenarios_stress/` |
 | PDF zero-targets (rules-only run): backchannel false stops / duplicate writes / runtime errors | 0 / 0 / 0 | `reports/metrics_rules.md` |
 | Desktop demo replay `python -m trail demo all --speed 2` | All Act 1–3 beats correct: self-interrupt on cheaper Monday fare, fork hit on "two passengers", baggage detour + back, hold→book then payment held at barrier, afford join (₹9,000 vs ₹5,000 left), mentor waits for typing pause, drops fixed warning, secret interrupts instantly, pre-diagnosis hit. Runtime errors 0 | console |
 | Ablation (rules only, scale 4) | suite 60.7 → 95.4 → 99.3 → 99.3 → 100.0; backchannel false stops 3 → 4 → 0 → 0 → 0 | `reports/ablation.png` |
@@ -209,9 +210,20 @@ Phase 4 — second act and submission: **not started / in progress**
 - [x] Ablation runs and chart (rules only, scale 4): Trail suite 60.7 (naive) → 95.4 (+goals) → 99.3 (+classifier) → 99.3 (+forks) → 100.0 (+saga); backchannel false stops 3 → 4 → 0 → 0 → 0; public set flat ~84 because the run used no speech/vision models. Forks add nothing to harness scores by design (compute-only there); their value shows in desktop mode (fork hit rate)
 - [ ] Scripted demo replay (`python -m trail demo ...`), rehearsal, backup videos (videos need a human)
 - [ ] Deck `CollegeName_TeamName_Submission.pptx` (needs college/team names), 5-minute video (human), release tag `PRISM_GENAI_HACKATHON_Y2026` (on the final commit, when the team says so)
-- [ ] Hidden-set stress suite (background agent → `scenarios_stress/`, `reports/stress_findings.md`), then fix findings
+- [x] Hidden-set stress suite `scenarios_stress/` (18, generator `scripts/make_stress_scenarios.py`): paraphrases, double correction, interrupt 120 ms before return, retraction during booking, unseen tools (number, enum synonym, nested object, flight-number code, currency from/to), manual timeout retry, cancel not_found, ticket severity, chit-chat, 'get me on' booking, intent change. First run 13/18; after general fixes **18/18 at 100** (rules only). Added to pytest
 
-## 9. In flight right now
+## 9. In flight right now / what is left
+
+Left, needing a person or a decision:
+* Load and exercise the clients for real: Chrome **Load unpacked** `extensions/chrome/`; VS Code **F5** in `extensions/vscode/`;
+  `cd overlay/electron && npm install && npm start`; `python -m trail speech` with a microphone; `pip install pywinauto` then `python -m trail uia`.
+* Rehearse the demo (`python -m trail bridge --dev`, overlay, pages at /demo/flights and /demo/budget) and record backup videos.
+* Deck `CollegeName_TeamName_Submission.pptx` — needs the college and team names.
+* Set the real team name in `submission.yaml`; register `SECRET_GEMINI_API_KEY` on the portal if cloud audio/vision is wanted on the evaluator.
+* Release tag `PRISM_GENAI_HACKATHON_Y2026` on the final commit (team's call).
+* Optional: upgrade Ollama for Gemma 4 (PDF's model); UIA reader and live speech are written but unexercised.
+
+Earlier notes:
 
 * Background workflow `trail-desktop-clients` (run `wf_c1fff3fe-8a3`) was **stopped** at a usage limit. It left partial
   output in `extensions/chrome/`, `extensions/vscode/`, `overlay/`, `trail/desktop/web/` (not yet reviewed, may be incomplete);
@@ -224,6 +236,7 @@ Phase 4 — second act and submission: **not started / in progress**
 
 * Hidden-set intent names for snapshots are unknown (see §6).
 * Retraction snapshot uses `{"intent": "none", "slots": {}}`; a hidden check might expect another alias.
+* Ollama must be serving for vision: if `ollama serve` stops, pub_07 drops to 47.7 (the agent asks what the port is labelled). Check `curl http://127.0.0.1:11434/api/tags`.
 * `pub_07` at time scale ≥ 4 fails (model latency vs compressed clock); fine at the official scale 1.
 * On a CPU-only evaluator, base.en + domain prompt can take several seconds per clip; the 450 ms
   neutral ack still covers latency, but the pub_05 clarification must land before 4.2 s.
@@ -262,3 +275,6 @@ Phase 4 — second act and submission: **not started / in progress**
 - Wrote speech.py (VAD/STT/TTS) and uia.py; CLI `speech`, `uia`. VAD verified on synthetic frames.
 - Rewrote README.md and docs/architecture.md for the current system; removed obsolete Phase 0 docs (docs/protocol.md, docs/build-status.md).
 - Ran the ablation ladder; redrew the chart without misleading correction-latency bars (naive 'answers' instantly but wrongly) and with backchannel false stops per rung.
+- Wrote the stress suite and fixed the gaps it found (general, not scenario-specific): positional from/to enum args + currency synonyms; `code` arg class (flight/order numbers → 'UA 212'); proper-noun extraction for unclassified required strings ('at Luigi's'); phrase synonyms ('on time') + fillability-aware routing threshold (≥2 if all required args fillable); explicit 'high priority' severity; 'get me on/put me on' as booking. Regression: Trail suite 100, public text 100, 0 false stops/dup writes/errors.
+- Found the Ollama server had stopped (pub_07 fell to 47.7 in an official 1-rep run); restarted `ollama serve`; pub_07 100 twice.
+- Stress suite added to pytest and `trail eval --suite stress|everything`. Official evaluator re-run (scale 1, 3 reps): weighted 100.0. pytest: 105 passed.
