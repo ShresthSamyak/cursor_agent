@@ -101,7 +101,11 @@ def trace_metrics(scenario: dict, trace: list[dict]) -> dict[str, Any]:
     rec = (scenario.get("ground_truth") or {}).get("recovery") or {}
     for inv in rec.get("invalidated_calls", []):
         after = float(inv.get("invalid_after_ms", 0))
-        olds = [str(v).lower() for vals in (inv.get("args_subset") or {}).values() for v in (vals if isinstance(vals, list) else [vals])]
+        # Only values the user moved away from count: a value that is still in the final state is not stale.
+        final_state = next((a.get("state_snapshot") for a in reversed(actions) if isinstance(a.get("state_snapshot"), dict)), {}) or {}
+        current = {str(v).lower() for v in (final_state.get("slots") or {}).values()}
+        olds = [str(v).lower() for vals in (inv.get("args_subset") or {}).values()
+                for v in (vals if isinstance(vals, list) else [vals]) if str(v).lower() not in current]
         for a in actions:
             if a.get("action") == "final_response" and a["t_ms"] > after + 50:
                 text = str(a.get("payload", {}).get("text", "")).lower()

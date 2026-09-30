@@ -1,0 +1,562 @@
+{
+  "rows": [
+    {
+      "scenario_id": "pub_01_text_simple",
+      "suite": "public",
+      "modality": "text",
+      "difficulty": "L1",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 1
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 3,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 1,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 1,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 28.0,
+          "p50": 28.0,
+          "mean": 28.0
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_02_text_interrupt",
+      "suite": "public",
+      "modality": "text",
+      "difficulty": "L2",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [
+          37.0
+        ],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 2
+      },
+      "runtime": {
+        "turns": 2,
+        "interrupts": {
+          "new": 1,
+          "correction": 1
+        },
+        "corrections": 1,
+        "fork_spawned": 0,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 2,
+        "calls_cancelled": 1,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 2,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 2,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 2,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": 0.0
+      }
+    },
+    {
+      "scenario_id": "pub_03_text_chained_booking",
+      "suite": "public",
+      "modality": "text",
+      "difficulty": "L2",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 1
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 2,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 2,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 1,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_04_text_no_tool",
+      "suite": "public",
+      "modality": "text",
+      "difficulty": "L1",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 0
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 0,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 0,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 0,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_05_audio_asr_ambiguity",
+      "suite": "public",
+      "modality": "audio",
+      "difficulty": "L2",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 2
+      },
+      "runtime": {
+        "turns": 2,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 0,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 1,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 2,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 2,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 2,
+          "max": 472.0,
+          "p50": 472.0,
+          "mean": 468.4
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_06_audio_disfluency",
+      "suite": "public",
+      "modality": "audio",
+      "difficulty": "L2",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 1
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 0,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 1,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 1,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 248.9,
+          "p50": 248.9,
+          "mean": 248.9
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_07_visual_port_lookup",
+      "suite": "public",
+      "modality": "visual",
+      "difficulty": "L2",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 1
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 0,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 1,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 1,
+        "held_at_barrier": 0,
+        "llm_calls": 1,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_08_text_tool_failure",
+      "suite": "public",
+      "modality": "text",
+      "difficulty": "L3",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 2
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 2,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 2,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 1,
+        "fillers": 2,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    },
+    {
+      "scenario_id": "pub_09_text_unseen_tool",
+      "suite": "public",
+      "modality": "text",
+      "difficulty": "L2",
+      "totals": [
+        100.0
+      ],
+      "median": 100.0,
+      "metrics": {
+        "yield_ms": [],
+        "revised_answer_ms": [],
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "duplicate_writes": 0,
+        "fillers": 1
+      },
+      "runtime": {
+        "turns": 1,
+        "interrupts": {
+          "new": 1
+        },
+        "corrections": 0,
+        "fork_spawned": 0,
+        "fork_hits": 0,
+        "fork_killed": 0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 0,
+        "stale_results_ignored": 0,
+        "stale_proposals_dropped": 0,
+        "wasted_agent_interrupts": 0,
+        "duplicate_writes": 0,
+        "duplicate_writes_prevented": 0,
+        "calls_issued": 1,
+        "calls_cancelled": 0,
+        "compensations": 0,
+        "retries": 0,
+        "fillers": 1,
+        "held_at_barrier": 0,
+        "llm_calls": 0,
+        "llm_failures": 0,
+        "duplicate_events_dropped": 0,
+        "errors": 0,
+        "time_to_yield_ms": {
+          "n": 1,
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
+        },
+        "first_response_ms": {
+          "n": 1,
+          "max": 23.9,
+          "p50": 23.9,
+          "mean": 23.9
+        },
+        "correction_latency_ms": null,
+        "fork_hit_rate": null
+      }
+    }
+  ],
+  "summary": {
+    "public_plain": 100.0,
+    "public_weighted": 100.0,
+    "trail_plain": null,
+    "all_plain": 100.0,
+    "time_to_yield_ms_p50": 37.0,
+    "time_to_yield_ms_p95": 37.0,
+    "revised_answer_ms_p50": null,
+    "corrections": 1,
+    "fork_hits": 0,
+    "fork_hit_rate": 0.0,
+    "backchannel_false_stops": 0,
+    "stale_output_leaks": 0,
+    "stale_output_leaks_runtime": 0,
+    "duplicate_writes": 0,
+    "stale_results_ignored": 0,
+    "calls_cancelled": 1,
+    "compensations": 0,
+    "held_at_barrier": 0,
+    "runtime_errors": 0
+  },
+  "time_scale": 1.0,
+  "reps": 1,
+  "models": "TRAIL_LLM=auto, TRAIL_STT=whisper"
+}

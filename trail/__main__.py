@@ -1,6 +1,6 @@
 """Command line: evidence runs, the ablation ladder, and the desktop bridge.
 
-    python -m trail eval [--suite all|public|trail] [--time-scale 4] [--reps 1]
+    python -m trail eval [--suite all|public|trail] [--time-scale 1] [--reps 1]
     python -m trail ablate [--suite trail] [--time-scale 4]
     python -m trail bridge [--port 8765]          # desktop mode (see trail/desktop)
     python -m trail demo act1                      # scripted replay of a demo act
@@ -17,12 +17,13 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command", required=True)
     ev = sub.add_parser("eval", help="score the public set and Trail's suite with the kit scorer")
     ev.add_argument("--suite", choices=["all", "public", "trail", "stress", "everything"], default="all")
-    ev.add_argument("--time-scale", type=float, default=4.0)
+    ev.add_argument("--time-scale", type=float, default=None,
+                    help="default 1 (real time) when models are on, 4 when TRAIL_LLM=none and TRAIL_STT=none")
     ev.add_argument("--reps", type=int, default=1)
     ev.add_argument("--name", default="metrics")
     ab = sub.add_parser("ablate", help="run the ablation ladder and draw the chart")
     ab.add_argument("--suite", choices=["all", "public", "trail", "stress", "everything"], default="all")
-    ab.add_argument("--time-scale", type=float, default=4.0)
+    ab.add_argument("--time-scale", type=float, default=None)
     ab.add_argument("--reps", type=int, default=1)
     br = sub.add_parser("bridge", help="run the desktop runtime behind the localhost WebSocket bridge")
     br.add_argument("--port", type=int, default=8765)
@@ -44,6 +45,10 @@ def main() -> None:
         from . import eval as E
 
         paths = E.scenario_paths(args.suite)
+        if args.time_scale is None:
+            # Model calls take real wall time, so a sped-up clock would starve vision/ASR of their budget.
+            rules_only = os.environ.get("TRAIL_LLM") == "none" and os.environ.get("TRAIL_STT") == "none"
+            args.time_scale = 4.0 if rules_only else 1.0
         if args.command == "eval":
             report = E.run(paths, time_scale=args.time_scale, reps=args.reps)
             report.update({"time_scale": args.time_scale, "reps": args.reps, "models": E.models_in_use()})

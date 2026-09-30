@@ -22,6 +22,7 @@ from collections import deque
 SAMPLE_RATE = 16000
 FRAME_MS = 30
 FRAME = SAMPLE_RATE * FRAME_MS // 1000
+PROMPT: str | None = None
 
 
 class EnergyVAD:
@@ -83,7 +84,10 @@ async def run(url: str, token: str) -> None:
     from websockets.asyncio.client import connect
 
     from ..core import media
+    from .tools import MANIFEST
 
+    global PROMPT
+    PROMPT = media.asr_prompt(list(MANIFEST), [])      # same domain vocabulary as the kit path
     await media.load_stt()
     loop = asyncio.get_running_loop()
     frames: asyncio.Queue = asyncio.Queue()
@@ -112,7 +116,8 @@ async def run(url: str, token: str) -> None:
                 return
             audio = np.concatenate(utter).astype("float32")
             tr = await asyncio.to_thread(lambda: media._WHISPER.transcribe(audio, language="en", beam_size=1 if not final else 5,
-                                                                          condition_on_previous_text=False)[0])
+                                                                          condition_on_previous_text=False,
+                                                                          initial_prompt=PROMPT)[0])
             text = " ".join(s.text.strip() for s in await asyncio.to_thread(list, tr)).strip()
             if text:
                 await ws.send(json.dumps({"type": "event", "event": {"type": "speech_final" if final else "speech_partial",

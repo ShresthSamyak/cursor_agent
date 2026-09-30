@@ -121,7 +121,7 @@ chrome.runtime.onMessage.addListener((msg: any) => {
   if (msg?.kind === "trail-paused") { paused = !!msg.paused; return; }
   if (msg?.kind !== "trail-output") return;
   const o = msg.output;
-  if (o?.type !== "speak" || !o.text) return;
+  if ((o?.type !== "speak" && o?.type !== "speak_end") || !o.text) return;
   const toast = document.createElement("div");
   toast.textContent = o.text;
   const tier = o.meta?.tier;

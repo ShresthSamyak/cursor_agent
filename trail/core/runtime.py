@@ -1674,8 +1674,11 @@ class Runtime:
         before = self.arbiter.dropped_stale
         for item in self.arbiter.due(now_ms=self.clock.now_ms(), user_speaking=self.user_speaking,
                                      typing=self.typing, boundary=boundary):
+            meta = {k: v for k, v in item.meta.items() if not k.startswith("_")}
+            if "_hash" in item.meta:
+                self.mentor.delivered[item.key] = item.meta["_hash"]
             self._out("speak", kind=NOTICE, text=item.text, snapshot=self._snapshot(),
-                      meta={"tier": item.tier.name.lower(), **item.meta})
+                      meta={"tier": item.tier.name.lower(), **meta})
         if self.arbiter.dropped_stale > before:
             self._out("status", code="notice_dropped", meta={"reason": "fixed by the user",
                                                               "count": self.arbiter.dropped_stale - before})
@@ -1698,13 +1701,16 @@ class Runtime:
         for n in d.get("secret_lines") or []:
             if isinstance(n, int) and n > 0 and not any(f.line == n and f.tier == "critical" for f in found):
                 text = lines[n - 1] if n <= len(lines) else ""
-                found.append(specialists.Finding(f"{file}:{n}:secret", "critical", file, n, specialists.line_hash(text), version,
+                found.append(specialists.Finding(f"{file}:secret:{specialists.line_hash(text)}", "critical", file, n, specialists.line_hash(text), version,
                                                  f"That looks like a live credential pasted into {file} line {n}. "
                                                  "Move it to an environment variable and rotate it.", "", "secret"))
         for f in found:
+            if self.mentor.delivered.get(f.key) == f.line_hash:
+                continue            # already said about this exact line; do not nag on every keystroke pause
             self.arbiter.submit(Pending(NOTICE, f.text(self.mentor.mode), tiers[f.tier], key=f.key,
                                         still_valid=lambda f=f: self.mentor.still_there(f),
-                                        created_ms=self.clock.now_ms(), meta={"file": f.file, "line": f.line, "rule": f.rule}))
+                                        created_ms=self.clock.now_ms(),
+                                        meta={"file": f.file, "line": f.line, "rule": f.rule, "_hash": f.line_hash}))
         self._flush_notices()
 
     def _on_terminal(self, ev: Event) -> None:

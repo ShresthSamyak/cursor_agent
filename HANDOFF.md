@@ -216,14 +216,25 @@ Phase 4 — second act and submission: **not started / in progress**
 
 ## 9. In flight right now / what is left
 
+Verified live on this machine (2026-09-30, full end-to-end round):
+* **GPU**: Ollama server log shows CUDA on the RTX 4060; `ollama ps` → `gemma4:e4b-it-qat 100% GPU`; faster-whisper `small.en` on cuda.
+  `OllamaLLM.warm()` now reads `/api/ps` and prints a stderr WARNING if the model is < 99 % in VRAM; the bridge prints the placement at startup
+  and exposes it at `GET /status` (connected clients, per-client event counts, trail size, phase, llm, llm_placement — no content).
+* **All 47 scenarios** (public 9 + trail 20 + stress 18) at 100 with real models at scale 1 (`reports/metrics_models.md`); public set 100.0 again after the last edits.
+* **Chrome extension**: Chrome 137+ (this machine: 155) ignores `--load-extension`, so the compiled `content.js`/`background.js` were run in real Chrome
+  with stubbed `chrome.*` APIs: a real mouse hover produced hover/dwell events at the bridge → trail; the self-interrupt
+  "Wait, Monday is cheaper at ₹4,500." rendered as a page toast. Real install still needs a human: `chrome://extensions` → Load unpacked `extensions/chrome/`.
+* **VS Code extension** (F5 dev host on `demo-workspace`): typing + doc_change arrive; the bug notice is delivered once at the typing pause; the pasted-key critical notice once.
+* **Speech client** connects to the bridge; offline VAD→whisper pipeline OK (live microphone accuracy still worth a human check).
+* **UIA reader** (pywinauto + psutil installed) connects; app_switch and dwell received.
+* **Electron overlay** (`npm install` done in `overlay/electron/`) connects and renders on top: panel with fork tree ("2 passengers ✓ served"), cursor ring, answer bubble "served from a speculative fork".
+* pytest **105 passed** after all edits.
+
 Left, needing a person or a decision:
-* Load and exercise the clients for real: Chrome **Load unpacked** `extensions/chrome/`; VS Code **F5** in `extensions/vscode/`;
-  `cd overlay/electron && npm install && npm start`; `python -m trail speech` with a microphone; `pip install pywinauto` then `python -m trail uia`.
-* Rehearse the demo (`python -m trail bridge --dev`, overlay, pages at /demo/flights and /demo/budget) and record backup videos.
+* Install the Chrome extension by hand (Load unpacked) and rehearse the demo; record backup videos.
 * Deck `CollegeName_TeamName_Submission.pptx` — needs the college and team names.
 * Set the real team name in `submission.yaml`; register `SECRET_GEMINI_API_KEY` on the portal if cloud audio/vision is wanted on the evaluator.
 * Release tag `PRISM_GENAI_HACKATHON_Y2026` on the final commit (team's call).
-* UIA reader and live speech are written but unexercised.
 
 Earlier notes:
 
@@ -239,7 +250,7 @@ Earlier notes:
 * Hidden-set intent names for snapshots are unknown (see §6).
 * Retraction snapshot uses `{"intent": "none", "slots": {}}`; a hidden check might expect another alias.
 * Ollama must be serving for vision: if `ollama serve` stops, pub_07 drops to 47.7 (the agent asks what the port is labelled). Check `curl http://127.0.0.1:11434/api/tags`.
-* `pub_07` at time scale ≥ 4 fails (model latency vs compressed clock); fine at the official scale 1.
+* `pub_07` at time scale ≥ 4 fails (model latency vs compressed clock); fine at the official scale 1. `trail eval`/`ablate` now default to scale 1 when models are on (4 only when TRAIL_LLM=none and TRAIL_STT=none).
 * On a CPU-only evaluator, base.en + domain prompt can take several seconds per clip; the 450 ms
   neutral ack still covers latency, but the pub_05 clarification must land before 4.2 s.
   A `SECRET_GEMINI_API_KEY` gives cloud audio + vision on the evaluator.
@@ -281,3 +292,5 @@ Earlier notes:
 - Found the Ollama server had stopped (pub_07 fell to 47.7 in an official 1-rep run); restarted `ollama serve`; pub_07 100 twice.
 - Stress suite added to pytest and `trail eval --suite stress|everything`. Official evaluator re-run (scale 1, 3 reps): weighted 100.0. pytest: 105 passed.
 - Upgraded Ollama 0.21.2 → 0.34.4 (winget); pulled `gemma4:e4b-it-qat` (watchdog restarted stalled pulls); restarted Ollama because the server had started mid-install without CUDA (was 100% CPU, vision timed out); added `think: false` to Ollama requests; vision prompt now asks for the component in sharpest focus / most prominent and to read its label (Gemma 4 otherwise named the geometrically central USB port), and its example no longer says 'HDMI port'. Official evaluator with Gemma 4 (scale 1, 3 reps): weighted 100.0, 27/27. Deleted `gemma3:4b`.
+- Full live verification round (see §9): GPU placement check + warning in `ollama.py`, `/status` endpoint in the bridge; eval stale-leak metric no longer flags values still present in the final slots (false positives on trail_04/st_18); Chrome extension forwards `speak_end` to toasts; CodeMentor dedupes delivered findings by rule + content hash (VS Code live test showed repeats, and a line-number key shifted on insert); `speech.py` uses the same domain ASR prompt as the kit path (first utterance was misheard). Electron installed and launched. All 47 scenarios 100 with models; pytest 105 passed.
+- `trail eval`/`ablate` default time scale is now 1 when models are active (a default-4 run showed pub_07 at 47.7 purely from the compressed clock; public set 100.0 at scale 1).

@@ -52,6 +52,8 @@ class Bridge:
         self.state_pending = False
         self.latency: dict[str, float] = {}
         self._turn_started: float | None = None
+        self.event_counts: dict[str, int] = {}
+        self.seen_clients: dict[str, int] = {}
 
     # ---- outputs -> clients ---------------------------------------------------
     def sink(self) -> asyncio.Queue:
@@ -128,6 +130,7 @@ class Bridge:
             await ws.close(code=4401, reason="unauthorized")
             return
         self.clients[ws] = client
+        self.seen_clients[client] = self.seen_clients.get(client, 0) + 1
         await ws.send(json.dumps({"type": "state", "state": self.state()}))
         window_start, count = time.monotonic(), 0
         try:
@@ -173,6 +176,8 @@ class Bridge:
         except (ValidationError, ValueError):
             await ws.send(json.dumps({"type": "error", "code": "bad_frame", "text": f"invalid {etype} event"}))
             return
+        key = f"{client}:{event.type.value}"
+        self.event_counts[key] = self.event_counts.get(key, 0) + 1
         if event.type in {EventType.SPEECH_FINAL, EventType.VAD_START}:
             self._turn_started = time.monotonic()
         await self.events.put(event)
@@ -213,6 +218,12 @@ class Bridge:
             target = OVERLAY / rel
         if path == "/health":
             return connection.respond(HTTPStatus.OK, "ok\n")
+        if path == "/status":      # local diagnostics: who is connected, what they sent (no content)
+            body = json.dumps({"connected": sorted(set(self.clients.values())), "ever_connected": self.seen_clients,
+                               "events": self.event_counts, "trail": len(self.runtime.trail.entries),
+                               "phase": self.runtime.state.phase, "llm": getattr(self.runtime.llm, "name", None),
+                               "llm_placement": getattr(self.runtime.llm, "placement", {})})
+            return connection.respond(HTTPStatus.OK, body + "\n")
         if target is None or not _inside(target, (WEB, OVERLAY, CORPUS_PATH.parent)) or not target.is_file():
             return connection.respond(HTTPStatus.NOT_FOUND, "not found\n")
         from websockets.datastructures import Headers
@@ -256,7 +267,10 @@ async def serve(port: int = 8765, *, dev: bool = False, speed: float = 1.0) -> N
         print(f"Trail bridge on ws://127.0.0.1:{port}/ws  token={token}")
         print(f"  demo pages: http://127.0.0.1:{port}/demo/flights  http://127.0.0.1:{port}/demo/budget")
         print(f"  overlay (browser): http://127.0.0.1:{port}/overlay/?token={token}")
-        print(f"  models: llm={getattr(shared.get('llm'), 'name', None)} stt={shared.get('stt')}")
+        from ..core import media as _media
+        placement = getattr(shared.get('llm'), 'placement', {}) or {}
+        print(f"  models: llm={getattr(shared.get('llm'), 'name', None)} ({placement.get('processor', 'n/a')}) "
+              f"stt={shared.get('stt')} {_media.STT_INFO}")
         await runner
 
 

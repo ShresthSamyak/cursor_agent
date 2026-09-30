@@ -26,6 +26,7 @@ class OllamaLLM:
         self.supports_images = bool(vision_model)
         self._client = None
         self._loop = None
+        self.placement: dict[str, Any] = {}
 
     def _http(self):
         import asyncio
@@ -63,7 +64,28 @@ class OllamaLLM:
                 await self._http().post("/api/generate", json={"model": model, "prompt": "", "keep_alive": "30m"}, timeout=120.0)
             except Exception:
                 pass
+        self.placement = await self.gpu_placement()
+        if self.placement.get("gpu_fraction", 1.0) < 0.99:
+            import sys
+
+            print(f"[trail] WARNING: Ollama model {self.model} is {self.placement.get('processor')}; "
+                  "vision will be slow. Restart the Ollama app so it detects the GPU (check `ollama ps`).",
+                  file=sys.stderr)
         return True
+
+    async def gpu_placement(self) -> dict[str, Any]:
+        """How much of the loaded model sits in VRAM (Ollama falls back to CPU silently)."""
+        try:
+            r = await self._http().get("/api/ps", timeout=3.0)
+            for m in r.json().get("models", []):
+                if m.get("name") in {self.model, self.vision_model} or m.get("model") in {self.model, self.vision_model}:
+                    size, vram = float(m.get("size") or 0), float(m.get("size_vram") or 0)
+                    frac = vram / size if size else 0.0
+                    return {"gpu_fraction": round(frac, 3),
+                            "processor": "100% GPU" if frac >= 0.99 else ("100% CPU" if frac == 0 else f"{frac:.0%} GPU")}
+        except Exception:
+            pass
+        return {}
 
     async def json(self, system: str, prompt: str, *, images: list[str] | None = None,
                    timeout: float = 8.0) -> dict[str, Any] | None:

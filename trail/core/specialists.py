@@ -181,6 +181,7 @@ class CodeMentor:
     hovered: list[str] = field(default_factory=list)
     diagnosis: dict[str, Any] | None = None
     dropped_as_fixed: list[str] = field(default_factory=list)
+    delivered: dict[str, str] = field(default_factory=dict)     # finding key -> line hash already spoken
 
     def declare(self, text: str) -> str | None:
         m = re.search(r"\b(?:i'?m|i am|we'?re)\s+(?:building|writing|working on|implementing|adding)\s+(.+?)[.!]?$", text, re.I)
@@ -217,7 +218,7 @@ class CodeMentor:
             h = line_hash(text)
             for name, pat in _SECRET_PATTERNS:
                 if pat.search(text):
-                    out.append(Finding(f"{file}:{n}:{name}", "critical", file, n, h, version,
+                    out.append(Finding(f"{file}:{name}:{h}", "critical", file, n, h, version,
                                        f"That looks like a live credential ({name.replace('_', ' ')}) pasted into {file} line {n}. "
                                        "Move it to an environment variable and rotate it.", "", name))
                     break
@@ -228,18 +229,18 @@ class CodeMentor:
                 if rule == "none_deref" and not self._maybe_none(lines, n, m[1]):
                     continue
                 groups = [g for g in m.groups()] if m.groups() else []
-                out.append(Finding(f"{file}:{n}:{rule}", tier, file, n, h, version, msg.format(*groups, *[""] * 2),
+                out.append(Finding(f"{file}:{rule}:{h}", tier, file, n, h, version, msg.format(*groups, *[""] * 2),
                                    q.format(*groups, *[""] * 2), rule))
             if self.goal and re.search(r"oauth|login|auth|sign.?in", self.goal, re.I):
                 for rule, pat, msg in _DRIFT_RULES:
                     if pat.search(text):
-                        out.append(Finding(f"{file}:{n}:{rule}", "normal", file, n, h, version, msg,
+                        out.append(Finding(f"{file}:{rule}:{h}", "normal", file, n, h, version, msg,
                                            "Is hand-parsing this the OAuth way, or should the provider's library verify it?", rule))
         for d in diagnostics or []:
             if str(d.get("severity", "")).lower() in {"error", "0"}:
                 n = int(d.get("line") or 0)
                 text = lines[n - 1] if 0 < n <= len(lines) else ""
-                out.append(Finding(f"{file}:{n}:lint", "high", file, n, line_hash(text), version,
+                out.append(Finding(f"{file}:lint:{n}:{line_hash(text)}", "high", file, n, line_hash(text), version,
                                    f"The linter flags line {n}: {d.get('message', 'error')}.", "", "lint"))
         return out
 

@@ -29,7 +29,8 @@ async function connect(): Promise<void> {
   sock.onmessage = async (m: MessageEvent) => {
     let frame: any;
     try { frame = JSON.parse(String(m.data)); } catch { return; }
-    if (frame.type === "output" && frame.output?.type === "speak" && ["notice", "final", "clarify"].includes(frame.output.kind)) {
+    const out = frame.type === "output" ? frame.output : null;
+    if (out && ((out.type === "speak" && ["notice", "final", "clarify"].includes(out.kind)) || out.type === "speak_end")) {
       const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
       if (tab?.id != null) chrome.tabs.sendMessage(tab.id, { kind: "trail-output", output: frame.output }).catch(() => {});
     }
