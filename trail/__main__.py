@@ -28,6 +28,9 @@ def main() -> None:
     br.add_argument("--port", type=int, default=8765)
     br.add_argument("--corpus", default=None, help="travel corpus JSON (defaults to the bundled demo fares)")
     br.add_argument("--dev", action="store_true", help="use the fixed development token trail-dev")
+    sp = sub.add_parser("speech", help="microphone -> VAD barge-in + streaming STT -> bridge; TTS for answers")
+    sp.add_argument("--token", default=None)
+    sp.add_argument("--port", type=int, default=8765)
     dm = sub.add_parser("demo", help="scripted replay of a demo act (no perception needed)")
     dm.add_argument("act", choices=["act1", "act2", "act3", "heckler", "all"])
     dm.add_argument("--speed", type=float, default=1.0)
@@ -55,6 +58,11 @@ def main() -> None:
         from .desktop.bridge import main as bridge_main
 
         bridge_main(port=args.port, corpus=args.corpus, dev=args.dev)
+        return
+    if args.command == "speech":
+        from .desktop.speech import main as speech_main
+
+        speech_main(token=args.token, port=args.port)
         return
     if args.command == "demo":
         from .desktop.demo import main as demo_main
