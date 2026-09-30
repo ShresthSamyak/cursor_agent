@@ -153,7 +153,8 @@ export class BridgeClient {
 
     this.ready = false;
     this.sawAuthError = false;
-    this.setStatus("connecting");
+    // Retries keep showing "offline"/"unauthorized" instead of flickering through "connecting".
+    if (this.status === "stopped" || this.status === "invalid") this.setStatus("connecting");
     const socket = openSocket(
       u.toString(),
       {
