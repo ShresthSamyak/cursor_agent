@@ -53,6 +53,8 @@ def domain_of(intent: str | None, tool: str | None = None) -> str | None:
         return "device"
     if intent in {"capabilities", "thanks"}:
         return "smalltalk"
+    if intent and intent.startswith("trail_"):
+        return "trail"
     if intent:
         return f"tool:{tool or intent}"
     return None
@@ -124,7 +126,7 @@ def classify(parse: Parse, goal: Goal | None, *, busy: bool, frame_changed: bool
         return Decision(NEW, patch=patch, reason="no active goal")
 
     new_domain = domain_of(new_intent, new_intent if new_intent not in FLIGHT_INTENTS | DEVICE_INTENTS else None)
-    goal_domain = "flight" if goal.domain == "flight" else ("device" if goal.domain == "device" else f"tool:{goal.tool}")
+    goal_domain = {"flight": "flight", "device": "device", "trail": "trail"}.get(goal.domain, f"tool:{goal.tool}")
     if new_intent and new_domain != goal_domain:
         return Decision(TOPIC_SWITCH, patch=patch, abandon="abandon" in acts or "instead" in acts or "stop" in acts,
                         reason=f"{goal_domain} -> {new_domain}")

@@ -51,6 +51,7 @@ class Pending:
     key: str
     still_valid: Callable[[], bool] | None = None
     created_ms: float = 0.0
+    meta: dict = field(default_factory=dict)
 
 
 @dataclass

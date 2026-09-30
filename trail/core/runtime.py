@@ -18,7 +18,7 @@ from uuid import uuid4
 
 from . import classify as C
 from . import entities as ent
-from . import media, nlg, nlu
+from . import media, nlg, nlu, specialists
 from .arbiter import ACK, CLARIFY, FINAL, NOTICE, Arbiter, Pending, Tier
 from .bus import Event, EventType, Output
 from .clock import VirtualClock
@@ -132,6 +132,10 @@ class Runtime:
         self._speaking_text: str | None = None
         self._closed = False
         self.log: list[dict[str, Any]] = []       # decision audit (what was read, what was decided)
+        # Desktop layer: specialists read the trail; the mentor watches the editor.
+        self.mentor = specialists.CodeMentor()
+        self.specialist_override: str | None = None
+        self.prediagnosis_hits = 0
 
     # ------------------------------------------------------------------ state
     @property
@@ -421,6 +425,10 @@ class Runtime:
             self._flush_notices(boundary=True)
         elif k in {EventType.SAVE, EventType.TEST_RUN}:
             self._flush_notices(boundary=True)
+        elif k == EventType.DOC_CHANGE:
+            self._on_doc_change(ev)
+        elif k == EventType.TERMINAL:
+            self._on_terminal(ev)
         return True
 
     def _yield_now(self, ev: Event) -> None:
@@ -609,6 +617,9 @@ class Runtime:
     # ------------------------------------------------------------------ understanding
     def _understand(self, text: str) -> tuple[nlu.Parse, str | None]:
         parse = nlu.parse(text)
+        desk = self._desktop_intent(parse)
+        if desk is not None:
+            return nlu.Parse(**{**parse.__dict__, "intent": desk, "domain": "trail", "confidence": 0.9}), None
         tool = None
         intent = parse.intent
         if intent in FLIGHT_INTENTS and not (set(self.manifest.tools) & {"flight_search", "book_flight"}) and self.manifest:
@@ -641,6 +652,26 @@ class Runtime:
                         break
         return parse, tool
 
+    def _desktop_intent(self, parse: nlu.Parse) -> str | None:
+        """Specialist intents grounded in what the user attended to (PDF p. 10-12)."""
+        text = parse.text
+        if re.search(r"\b(?:i'?m|i am|we'?re)\s+(?:building|writing|working on|implementing|adding)\b", text, re.I):
+            return "declare_goal"
+        if re.search(r"\bwhy did (?:that|it|this|the tests?) (?:break|fail)|what (?:went|broke) wrong|why (?:is|are) (?:it|the tests?) failing\b",
+                     text, re.I) and (self.mentor.diagnosis is not None or self.config.mode == "desktop"):
+            return "explain_failure"
+        if not self.trail.fares():
+            return None
+        if specialists.wants_afford(text, self.trail):
+            return "trail_afford"
+        focus = self.focus
+        if re.search(r"\b(?:book|reserve)\s+(?:it|that|this|that one|this one|the cheapest(?: one)?|monday|tuesday|wednesday|"
+                     r"thursday|friday|saturday|sunday)\b", text, re.I) and not parse.places and (focus is None or focus.domain == "trail"):
+            return "trail_book"
+        if specialists.wants_trail_compare(text, self.trail) and not parse.places:
+            return "trail_compare"
+        return None
+
     # ------------------------------------------------------------------ the decision
     def _on_utterance(self, text: str, *, barge_in: bool, shaky: dict[str, list[str]] | None = None,
                       spoken: bool = False) -> None:
@@ -651,6 +682,11 @@ class Runtime:
             return
         goal = self.goals.current or (self.focus if self.focus and self.focus.status == DONE else None)
         busy = bool(goal and self.saga.in_flight(goal.id))
+        if parse.intent in {"declare_goal", "explain_failure", "trail_afford", "trail_book"} or (
+                parse.intent == "trail_compare" and (goal is None or goal.intent != "trail_compare")):
+            self.metrics.interrupt(C.NEW if goal is None else C.TOPIC_SWITCH)
+            self._new_goal(parse, None)
+            return
 
         # 1. The user may be answering our own question.
         if goal is not None and goal.question is not None and self._answer_question(goal, parse, shaky):
@@ -757,6 +793,20 @@ class Runtime:
         if intent is None:
             self._unknown(parse, spoken=spoken)
             return
+        if intent == "declare_goal":
+            goal_text = self.mentor.declare(parse.text) or "that"
+            self._say(FINAL, f"Got it: {goal_text}. I'll watch for anything that drifts from it, and I'll wait for "
+                             "a pause unless something is urgent.")
+            return
+        if intent == "explain_failure":
+            d = self.mentor.diagnosis
+            if d is not None:
+                self.prediagnosis_hits += 1
+                self._out("status", code="prediagnosis_hit", meta={"file": d.get("file"), "line": d.get("line")})
+                self._say(FINAL, d["answer"])
+            else:
+                self._say(FINAL, "I haven't seen a failure yet. Run the tests and ask me again.")
+            return
         goal = self._goal_from(parse, intent, tool, shaky=shaky)
         self.goals.push(goal)
         self.focus = goal
@@ -765,7 +815,7 @@ class Runtime:
 
     def _goal_from(self, parse: nlu.Parse, intent: str, tool: str | None, *, shaky=None) -> Goal:
         domain = "flight" if intent in FLIGHT_INTENTS or intent == "cancel_booking" else (
-            "device" if intent in DEVICE_INTENTS else "tool")
+            "device" if intent in DEVICE_INTENTS else ("trail" if intent.startswith("trail_") else "tool"))
         g = Goal(id=self.goals.new_id(), intent=intent, domain=domain, text=parse.text, parse=parse,
                  tool=tool, created_turn=self.turn_seq)
         for k, v in parse.slots.items():
@@ -797,6 +847,24 @@ class Runtime:
         if spec is not None and spec.state_modifying and _explicit_request(parse.text, spec):
             g.authorized.add(spec.name)
         g.slots["_auth_turn"] = self.turn_seq
+        if domain == "trail":
+            prior = self.focus if self.focus is not None and self.focus.domain == "trail" else None
+            pax = next((c.value for c in parse.counts if c.unit == "passenger"), None)
+            g.slots["passengers"] = pax or (prior.slots.get("passengers") if prior else None) or 1
+            route = self.trail.active_route()
+            best = self.trail.cheapest(context=route)
+            if route:
+                g.slots["route"] = route
+            if best is not None:
+                g.slots["day"] = best.dates[0] if best.dates else best.text
+                g.slots["_best"] = best.id
+            day = next((d.value for d in parse.dates), None)
+            if intent == "trail_book" and day:
+                g.slots["day"] = day
+            if intent == "trail_book":
+                g.authorized.add("book_fare")
+            if prior is not None and prior.status in {ACTIVE, WAITING}:
+                prior.status = DONE
         return g
 
     def _device_model(self, parse: nlu.Parse) -> str | None:
@@ -873,6 +941,8 @@ class Runtime:
             self.features.forks and changed) else None
         self.forks.invalidate(goal.id, goal.epochs, set(changed))
         if fork is not None:
+            if goal.intent == "trail_compare" and isinstance(fork.result, str):
+                goal.slots["_fork_answer"] = fork.result
             self._audit("fork_hit", fork=fork.id, hypothesis=_plain(fork.hypothesis))
             self._out("status", code="fork_hit", meta={"fork": fork.id, "hypothesis": _plain(fork.hypothesis)})
         primary = next((c for c in changed if not c.startswith("_")), None)
@@ -1394,6 +1464,26 @@ class Runtime:
         if goal.slots.get("_undone"):
             notes = " I also undid the earlier " + ", ".join(t.replace("_", " ") for t in goal.slots["_undone"]) + "."
             goal.slots["_undone"] = []
+        if goal.intent == "trail_compare":
+            fork_answer = goal.slots.pop("_fork_answer", None)
+            text = fork_answer or specialists.fare_answer(self.trail, goal.parse, passengers=int(goal.slots.get("passengers") or 1))
+            best = self.trail.cheapest(context=self.trail.active_route())
+            if best is not None:
+                goal.slots["_best"] = best.id
+            return text or "I haven't seen any fares yet. Hover over a few and ask me again."
+        if goal.intent == "trail_afford":
+            return specialists.afford_answer(self.trail, passengers=int(goal.slots.get("passengers") or 1)) or \
+                "I haven't seen any fares yet."
+        if goal.intent == "trail_book":
+            if question:
+                return question
+            pay = results.get("pay")
+            book = results.get("book") or {}
+            if pay is not None:
+                amount = ent.format_price(float(book.get("amount_inr", 0)), "INR")
+                return (f"Paid {amount}. Booking {book.get('booking_id')} on {goal.slots.get('day')} is confirmed "
+                        f"(payment {pay.get('payment_id')}).")
+            return ""
         if goal.intent in FLIGHT_INTENTS:
             booked = results.get("book")
             return nlg.flight_answer(goal, plan, booked, question=question) + notes
@@ -1491,6 +1581,16 @@ class Runtime:
         self._audit("speculate", text=partial, intent=parse.intent, slots=_plain(parse.slots))
 
     def _spawn_forks(self, goal: Goal) -> None:
+        if goal.intent == "trail_compare":
+            pax = int(goal.slots.get("passengers") or 1)
+            for hyp in ({"passengers": pax + 1}, {"passengers": pax + 2}):
+                async def fare_fork(h=hyp):
+                    await asyncio.sleep(0)
+                    return specialists.fare_answer(self.trail, None, passengers=h["passengers"])
+                if self.forks.spawn(goal.id, hyp, dict(goal.epochs), fare_fork):
+                    self.metrics.fork_spawned += 1
+            self._out("status", code="forks", meta={"forks": self.forks.tree()})
+            return
         if goal.domain != "flight":
             return
         for hyp in likely_corrections(goal.slots):
@@ -1523,6 +1623,9 @@ class Runtime:
 
     def _on_hover(self, ev: Event) -> None:
         # Hovers are only prefetch hints; they never enter the trail.
+        if ev.target is not None and "code" in (ev.app or "").lower():
+            ctx = ev.target.context or ev.target.text
+            self.mentor.hovered = ([ctx] + [h for h in self.mentor.hovered if h != ctx])[:20]
         self._audit("hover", app=ev.app)
 
     def _on_new_evidence(self, entry) -> None:
@@ -1554,10 +1657,38 @@ class Runtime:
         self._say(FINAL, new)
 
     def _flush_notices(self, boundary: bool = False) -> None:
+        before = self.arbiter.dropped_stale
         for item in self.arbiter.due(now_ms=self.clock.now_ms(), user_speaking=self.user_speaking,
                                      typing=self.typing, boundary=boundary):
             self._out("speak", kind=NOTICE, text=item.text, snapshot=self._snapshot(),
-                      meta={"tier": item.tier.name.lower()})
+                      meta={"tier": item.tier.name.lower(), **item.meta})
+        if self.arbiter.dropped_stale > before:
+            self._out("status", code="notice_dropped", meta={"reason": "fixed by the user",
+                                                              "count": self.arbiter.dropped_stale - before})
+        if self.arbiter.queue:
+            self._out("status", code="notice_waiting", meta={"count": len(self.arbiter.queue)})
+
+    def _on_doc_change(self, ev: Event) -> None:
+        d = ev.data or {}
+        file = str(d.get("file") or "untitled")
+        version = int(d.get("version") or 0)
+        text = d.get("text")
+        if isinstance(text, str):
+            self.mentor.update(file, version, text[:400_000])
+        changed = [c for c in d.get("changed") or [] if isinstance(c, dict)]
+        diags = [x for x in d.get("diagnostics") or [] if isinstance(x, dict)]
+        tiers = {"critical": Tier.CRITICAL, "high": Tier.HIGH, "normal": Tier.NORMAL, "low": Tier.LOW}
+        for f in self.mentor.check(file, version, changed, diags):
+            self.arbiter.submit(Pending(NOTICE, f.text(self.mentor.mode), tiers[f.tier], key=f.key,
+                                        still_valid=lambda f=f: self.mentor.still_there(f),
+                                        created_ms=self.clock.now_ms(), meta={"file": f.file, "line": f.line, "rule": f.rule}))
+        self._flush_notices()
+
+    def _on_terminal(self, ev: Event) -> None:
+        diag = self.mentor.on_terminal(ev.text or "")
+        if diag is not None:
+            self._audit("prediagnosis", file=diag.get("file"), line=diag.get("line"), error=diag.get("error"))
+            self._out("status", code="prediagnosis_ready", meta={"file": diag.get("file"), "line": diag.get("line")})
 
     # ------------------------------------------------------------------ desktop: streamed speech
     def _stream(self, text: str) -> None:
@@ -1644,6 +1775,12 @@ def _explicit_request(text: str, spec: ToolSpec) -> bool:
 
 
 def _confirm_text(goal: Goal, spec: ToolSpec, args: dict[str, Any]) -> str:
+    if "pay" in spec.name:
+        amount = next((v for k, v in args.items() if "amount" in k and isinstance(v, (int, float))), None)
+        cur = "INR" if any(k.endswith("inr") for k in args) else "USD"
+        ref = next((v for k, v in args.items() if k.endswith("_id")), "the booking")
+        money = ent.format_price(float(amount), cur) if amount is not None else "it"
+        return f"{ref} is booked and held. Paying {money} is final, so shall I go ahead and pay?"
     what = spec.name.replace("_", " ")
     detail = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in args.items()
                        if isinstance(v, (str, int, float)) and not isinstance(v, bool))[:120]

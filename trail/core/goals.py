@@ -181,9 +181,33 @@ def plan(goal: Goal, env: PlanEnv) -> Plan:
         return _plan_cancel(goal, env)
     if goal.intent in DEVICE_INTENTS:
         return _plan_device(goal, env)
+    if goal.intent == "trail_book":
+        return _plan_chain(goal, env, (("hold", "hold_fare", False), ("book", "book_fare", True), ("pay", "pay_booking", True)))
     if goal.tool and goal.tool in env.manifest:
         return _plan_tool(goal, env, env.manifest.tools[goal.tool])
     return Plan(steps=[])
+
+
+def _plan_chain(goal: Goal, env: PlanEnv, chain) -> Plan:
+    """A chain of tools where later steps take ids and amounts from earlier results."""
+    steps: list[Step] = []
+    extra: dict[str, Any] = {}
+    for name, tool, auth in chain:
+        spec = env.manifest.get(tool)
+        if spec is None:
+            continue
+        args, missing = build_args(spec, _ctx(goal, env, extra))
+        step = Step(name, tool, args, tuple(missing), needs_auth=auth)
+        steps.append(step)
+        if missing:
+            return Plan(steps, extra, question=(tuple(f"arg:{a}" for a in missing), "", ()))
+        result = goal.results.get(step.key or "")
+        if result is None:
+            return Plan(steps, extra)
+        for k, v in result.items():
+            if k != "status" and (k.endswith("_id") or k.startswith("amount")):
+                extra[k] = v
+    return Plan(steps, extra)
 
 
 def _ctx(goal: Goal, env: PlanEnv, extra: dict[str, Any] | None = None, query: str | None = None) -> ArgContext:
