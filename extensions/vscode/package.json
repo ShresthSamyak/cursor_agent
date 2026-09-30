@@ -1,0 +1,154 @@
+{
+  "name": "trail-code-mentor",
+  "displayName": "Trail code mentor",
+  "description": "Perception and UI for Trail, the interruptible cursor agent: streams hover, selection, typing rhythm, document changes, saves, test runs and terminal output to the local Trail bridge and renders its notices.",
+  "version": "0.1.0",
+  "publisher": "trail-local",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "trail.declareIntent",
+        "title": "Declare what I'm building",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.ask",
+        "title": "Ask",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.notNow",
+        "title": "Not now",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.setMode",
+        "title": "Teach mode / Fix mode",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.togglePerception",
+        "title": "Toggle perception",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.cancel",
+        "title": "Stop talking",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.clearFindings",
+        "title": "Clear finding highlights",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.reconnect",
+        "title": "Reconnect to bridge",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.showOutput",
+        "title": "Show output",
+        "category": "Trail"
+      },
+      {
+        "command": "trail.menu",
+        "title": "Menu",
+        "category": "Trail"
+      }
+    ],
+    "configuration": {
+      "title": "Trail",
+      "properties": {
+        "trail.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Connect to the local Trail bridge and send perception events. When off, nothing is read or sent."
+        },
+        "trail.bridgeUrl": {
+          "type": "string",
+          "default": "ws://127.0.0.1:8765/ws",
+          "description": "WebSocket endpoint of the Trail bridge. Only loopback hosts (127.0.0.1, localhost, ::1) are accepted."
+        },
+        "trail.token": {
+          "type": "string",
+          "default": "trail-dev",
+          "description": "Bridge token. If left at the default, the token in %LOCALAPPDATA%\\Trail\\bridge.token (or ~/.trail/bridge.token) is tried first."
+        },
+        "trail.readTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Opt in to sending terminal output (via shell integration) so stack traces can be pre-diagnosed. Secrets matching common key patterns are masked first."
+        },
+        "trail.typingIdleMs": {
+          "type": "number",
+          "default": 900,
+          "minimum": 300,
+          "maximum": 5000,
+          "description": "Idle time after the last edit that ends a typing burst and sends the document to the code mentor."
+        },
+        "trail.maxDocumentBytes": {
+          "type": "number",
+          "default": 200000,
+          "minimum": 1000,
+          "maximum": 240000,
+          "description": "Cap on document text sent with doc_change (the bridge refuses frames over 256 KB)."
+        },
+        "trail.dwellFromHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Also send a dwell event when the pointer rests on a symbol ~350 ms past the hover, so it enters the session trail."
+        },
+        "trail.showNotices": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show agent-initiated notices as VS Code notifications."
+        },
+        "trail.excludeFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/.env",
+            "**/.env.*",
+            "**/*.pem",
+            "**/*.key",
+            "**/*.pfx",
+            "**/*.p12",
+            "**/id_rsa*",
+            "**/id_ed25519*",
+            "**/.npmrc",
+            "**/.pypirc",
+            "**/.netrc",
+            "**/credentials*",
+            "**/secrets.*"
+          ],
+          "description": "Glob patterns for files Trail never reads (no hover, selection or document events)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "check": "node ./scripts/check-ws.js"
+  },
+  "devDependencies": {
+    "@types/node": "~22.20.4",
+    "@types/vscode": "~1.93.0",
+    "typescript": "~5.9.3"
+  }
+}
