@@ -13,11 +13,91 @@ Chrome, VS Code and your other apps. It remembers what you looked at, and it han
 
 | | |
 | --- | --- |
-| 🎬 **Demo video** | **[`docs/demo/trail_demo.mp4`](docs/demo/trail_demo.mp4)** (3 min, in this repo). Acts 1–2 are recorded live with the overlay; Act 3 and the heckler round are replays through the same runtime; results and ablation follow |
-| 📊 **Deck** | [`CollegeName_TeamName_Submission.pptx`](CollegeName_TeamName_Submission.pptx) (repo root) |
+| 🎬 **Demo video** | **[youtu.be/UeZS373sl90](https://youtu.be/UeZS373sl90)** (under 5 min) · backup recording in the repo: [`docs/demo/trail_demo.mp4`](docs/demo/trail_demo.mp4) |
+| 📊 **Presentation** | [`an interruptible cursor agent.pptx`](an%20interruptible%20cursor%20agent.pptx) (repo root) |
 | 🏷️ **Release tag** | [`PRISM_GENAI_HACKATHON_Y2026`](../../tree/PRISM_GENAI_HACKATHON_Y2026) |
 | 📄 **Design document** | [`Trail — Interruptible Cursor Agent.pdf`](Trail%20%E2%80%94%20Interruptible%20Cursor%20Agent.pdf) |
 | 🧭 **Engineering log** | [`HANDOFF.md`](HANDOFF.md): status, decisions, verification and the full change log |
+
+### Submission checklist
+
+| Item | Status | Where |
+| --- | --- | --- |
+| Working prototype code in a public GitHub repo | ✅ | this repository, tag `PRISM_GENAI_HACKATHON_Y2026` |
+| README with reproducible setup instructions | ✅ | [Quick start](#quick-start-run-it-in-10-minutes) and §6–§8 below |
+| Demo video, max 5 minutes (YouTube) | ✅ | [youtu.be/UeZS373sl90](https://youtu.be/UeZS373sl90) |
+| Presentation file (PPT) | ✅ | [`an interruptible cursor agent.pptx`](an%20interruptible%20cursor%20agent.pptx) |
+| `requirements.txt` | ✅ | [`requirements.txt`](requirements.txt) |
+
+---
+
+## Quick start: run it in 10 minutes
+
+These steps use Windows PowerShell, where Trail was built and tested. On macOS or Linux, use `.venv/bin/python` instead of
+`.venv\Scripts\python`. The voice output and the Excel/PDF reader are Windows-only; everything else works.
+
+**Step 1: Check the prerequisites.** You need Python 3.10–3.12 and Git.
+```powershell
+python --version        # expect Python 3.10.x, 3.11.x or 3.12.x
+git --version
+```
+
+**Step 2: Clone and install.**
+```powershell
+git clone https://github.com/ShresthSamyak/cursor_agent.git
+cd cursor_agent
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python -m pip install --only-binary=:all: "av==14.2.0"   # the audio decoder faster-whisper needs
+$env:PYTHONIOENCODING = "utf-8"                                         # set once per terminal
+```
+
+**Step 3 (optional): Turn on the vision model.** Install [Ollama](https://ollama.com), then:
+```powershell
+ollama pull gemma4:e4b-it-qat   # about 6 GB; check `ollama ps` shows "100% GPU" once it has run
+```
+You can skip this step. Everything still runs; only the camera-frame scenario (`pub_07`) then asks a clarifying question
+instead of answering. Speech-to-text works either way, because faster-whisper downloads its model automatically on first use.
+
+**Step 4: Run the tests.**
+```powershell
+.venv\Scripts\python -m pytest -q
+# expect: 127 passed
+```
+
+**Step 5: Get the official score.** This is the hackathon's own evaluator: validation, a smoke test, 3 repetitions, median and weighting.
+```powershell
+.venv\Scripts\python eval_submission.py . --reps 3
+# expect: WEIGHTED SCORE: 100.0 with Ollama running (step 3); without it, pub_07 alone drops
+```
+
+**Step 6: Watch the demo in the terminal.** This plays Acts 1–3 through the real runtime and needs no browser or microphone.
+```powershell
+.venv\Scripts\python -m trail demo all
+.venv\Scripts\python -m trail demo heckler     # Trail 100 vs the naive agent 54.5
+```
+
+**Step 7: Watch the demo live, with the overlay.** Use two terminals.
+```powershell
+# Terminal 1: start the bridge (it prints the URLs and where the models are loaded)
+.venv\Scripts\python -m trail bridge --dev
+```
+Open these two pages in your browser:
+- the overlay: **http://127.0.0.1:8765/overlay/?token=trail-dev**
+- the demo flights page: **http://127.0.0.1:8765/demo/flights**
+```powershell
+# Terminal 2: drive the acts into the live bridge; watch the overlay's bubble, fork tree and latency counters
+$env:PYTHONIOENCODING = "utf-8"
+.venv\Scripts\python -m trail demo all --via-bridge
+```
+
+**Step 8 (optional): Use it for real.** Point at things yourself instead of scripting them:
+- the Chrome extension: *Load unpacked* → `extensions/chrome/`
+- the VS Code code mentor: press F5 in `extensions/vscode/`
+- the always-on-top overlay: `overlay/electron`
+- the voice client: `python -m trail speech --wake`
+
+§8 walks through each one.
 
 ---
 
@@ -74,7 +154,7 @@ Forks are compute-only in the harness by design, so the scores never depend on t
 The demo is about 4.5 minutes long, in three acts plus a finale. Every beat is an interruption. You can replay it without any
 hardware: `python -m trail demo all`, or run `python -m trail demo all --via-bridge` so the overlay renders it live.
 
-**Video:** [`docs/demo/trail_demo.mp4`](docs/demo/trail_demo.mp4)
+**Video:** [youtu.be/UeZS373sl90](https://youtu.be/UeZS373sl90) · backup recording: [`docs/demo/trail_demo.mp4`](docs/demo/trail_demo.mp4)
 
 **Act 1: Booking (Chrome, fictional Skylark Air results page)**
 1. Hover Friday, Saturday and Sunday, then ask *"Which should I book?"* Trail answers: Saturday at ₹5,000.
