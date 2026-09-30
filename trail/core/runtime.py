@@ -409,6 +409,9 @@ class Runtime:
                 self._yield_now(ev)
             else:
                 self._flush_notices()
+                if self._speaker is not None and not self._speaker.done() and not self.user_speaking:
+                    self._speaker_paused = False
+                    self._unduck()
         elif k == EventType.CANCEL:
             self._yield_now(ev)
             self._stop(self.goals.current or self.focus, reason="esc")
@@ -941,6 +944,7 @@ class Runtime:
             self.features.forks and changed) else None
         self.forks.invalidate(goal.id, goal.epochs, set(changed))
         if fork is not None:
+            self.metrics.fork_hits += 1
             if goal.intent == "trail_compare" and isinstance(fork.result, str):
                 goal.slots["_fork_answer"] = fork.result
             self._audit("fork_hit", fork=fork.id, hypothesis=_plain(fork.hypothesis))
@@ -1619,6 +1623,10 @@ class Runtime:
             kind="select" if ev.type == EventType.SELECT else "dwell"))
         self._bump()
         self._out("status", code="trail_added", meta={"text": entry.text, "context": entry.context, "app": entry.app})
+        if entry.prices:
+            for g in self.goals.goals:
+                if g.domain == "trail":
+                    self.forks.kill_goal(g.id)          # forks computed over the old trail are stale
         self._on_new_evidence(entry)
 
     def _on_hover(self, ev: Event) -> None:
@@ -1655,6 +1663,8 @@ class Runtime:
         self._flush_notices()
         g.answer = new
         self._say(FINAL, new)
+        if self.features.forks:
+            self._spawn_forks(g)
 
     def _flush_notices(self, boundary: bool = False) -> None:
         before = self.arbiter.dropped_stale

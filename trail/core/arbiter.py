@@ -26,7 +26,7 @@ class Tier(IntEnum):
 
 # Past-tense completion claims. A future guard ("I'll", "now", "let me") makes it a promise.
 _CLAIMS: dict[str, tuple[str, ...]] = {
-    "book": (r"\bbooked\b", r"\breserved\b", r"booking (?:is )?confirmed", r"you'?re (?:all )?set\b", r"confirmed your"),
+    "book": (r"(?<![-\w])booked\b", r"(?<![-\w])reserved\b", r"booking (?:is )?confirmed", r"you'?re (?:all )?set\b", r"confirmed your"),
     "ticket": (r"ticket (?:id|created|opened|filed|number)", r"\b(?:opened|filed|created|raised|logged) (?:a |the |your )?(?:support )?ticket"),
     "cancel": (r"booking(?: [a-z]{2,4}-\w+)? (?:is |was |has been )?cancell?ed", r"cancell?ed (?:your|the) booking"),
     "generic": (r"\b(?:has|have) been (?:created|submitted|scheduled|sent|placed|ordered|charged|paid|processed|updated|deleted)\b",

@@ -115,6 +115,11 @@ def ack_for_goal(goal: Goal, manifest: Manifest, *, reason: str = "new", changed
         if dest:
             return f"Checking flights to {dest}{date}."
         return "Let me look up those flights."
+    if goal.intent == "trail_book":
+        day = s.get("day") or "that"
+        pax = int(s.get("passengers") or 1)
+        who = f" for {pax}" if pax > 1 else ""
+        return f"I'll hold {day}'s fare and book it{who} now."
     if goal.intent == "cancel_booking":
         bid = s.get("booking_id")
         return f"I'll cancel booking {bid} now." if bid else "I'll cancel that booking now."
@@ -178,6 +183,8 @@ def _goal_label(goal: Goal) -> str:
         return f"the flights to {dest}" if dest else "the flights"
     if goal.domain == "device":
         return "your device question"
+    if goal.domain == "trail":
+        return "the fares you were comparing"
     return f"the {goal.tool.replace('_', ' ')}" if goal.tool else "what we were doing"
 
 
@@ -398,6 +405,10 @@ def _label(key: str) -> str:
 
 def describe_result(spec: ToolSpec | None, goal: Goal, result: dict[str, Any]) -> str:
     fields = {k: v for k, v in result.items() if k not in {"status"} and v not in (None, "", [], {})}
+    prose = [v for k, v in fields.items() if k in {"answer", "text", "summary", "message", "reply", "detail"}
+             and isinstance(v, str) and len(v.split()) >= 5]
+    if prose:
+        return prose[0]
     subj = _subject(spec, goal)
     noun = spec.noun if spec else "result"
     where = f" in {subj}" if subj and _is_place(subj) else (f" for {subj}" if subj else "")
