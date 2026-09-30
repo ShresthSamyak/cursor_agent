@@ -260,7 +260,10 @@ class CodeMentor:
         if not re.search(r"Traceback \(most recent call last\)|\bError\b|Exception|FAILED|AssertionError", text):
             return None
         frames = re.findall(r'File "([^"]+)", line (\d+), in (\w+)', text)
-        exc = re.findall(r"^(\w+(?:Error|Exception|Exit)?):\s*(.*)$", text, re.M)
+        # pytest's own format: "auth.py:22: TypeError" locations and "E   TypeError: ..." lines.
+        frames += [(f, n, "") for f, n in re.findall(r"^([\w./\\:-]+\.py):(\d+): \w+", text, re.M)]
+        exc = re.findall(r"^E\s+(\w+(?:Error|Exception|Exit)):\s*(.*)$", text, re.M) or \
+            re.findall(r"^(\w+(?:Error|Exception|Exit)?):\s*(.*)$", text, re.M)
         err = exc[-1] if exc else ("Error", text.strip().splitlines()[-1][:160] if text.strip() else "")
         where = frames[-1] if frames else None
         own = [f for f in frames if not re.search(r"site-packages|lib[/\\]python", f[0])]
@@ -272,7 +275,7 @@ class CodeMentor:
         if file and file in self.docs and line and 0 < line <= len(self.docs[file]["lines"]):
             code = self.docs[file]["lines"][line - 1].strip()
         hint = ""
-        if err[0] == "AttributeError" and "NoneType" in err[1]:
+        if err[0] in {"AttributeError", "TypeError"} and "NoneType" in err[1]:
             hint = " Something returned None where an object was expected, so guard the lookup or fail with a clear error."
         elif err[0] in {"KeyError"}:
             hint = " A dictionary key is missing; check the key or use .get with a default."

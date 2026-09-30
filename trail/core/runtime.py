@@ -1689,7 +1689,16 @@ class Runtime:
         changed = [c for c in d.get("changed") or [] if isinstance(c, dict)]
         diags = [x for x in d.get("diagnostics") or [] if isinstance(x, dict)]
         tiers = {"critical": Tier.CRITICAL, "high": Tier.HIGH, "normal": Tier.NORMAL, "low": Tier.LOW}
-        for f in self.mentor.check(file, version, changed, diags):
+        found = self.mentor.check(file, version, changed, diags)
+        # The editor redacts keys before sending and reports only where they were.
+        lines = self.mentor.docs.get(file, {}).get("lines", [])
+        for n in d.get("secret_lines") or []:
+            if isinstance(n, int) and n > 0 and not any(f.line == n and f.tier == "critical" for f in found):
+                text = lines[n - 1] if n <= len(lines) else ""
+                found.append(specialists.Finding(f"{file}:{n}:secret", "critical", file, n, specialists.line_hash(text), version,
+                                                 f"That looks like a live credential pasted into {file} line {n}. "
+                                                 "Move it to an environment variable and rotate it.", "", "secret"))
+        for f in found:
             self.arbiter.submit(Pending(NOTICE, f.text(self.mentor.mode), tiers[f.tier], key=f.key,
                                         still_valid=lambda f=f: self.mentor.still_there(f),
                                         created_ms=self.clock.now_ms(), meta={"file": f.file, "line": f.line, "rule": f.rule}))
