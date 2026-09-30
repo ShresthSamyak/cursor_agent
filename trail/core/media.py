@@ -264,11 +264,11 @@ _VISION_SYSTEM = (
 )
 _VISION_PROMPT = (
     "The user is pointing their camera at something and will ask about it. "
-    "Identify the device, and the one component the user is most likely pointing at: the component in the "
-    "middle of the frame or most in focus. Printed labels next to ports or buttons (like 'HDMI', 'SS', a lightning "
-    "bolt, a headphone icon) are strong evidence. Reply as JSON: "
+    "Identify the device, and the one component the user is showing you: the component in the sharpest focus "
+    "and most prominent in the photo (not simply the one nearest the geometric center). Read the printed label "
+    "next to it, if there is one, and name it from that label. Reply as JSON: "
     '{"device_type": "laptop|tv|phone|washer|router|other", "device_model": "model text printed on the device, or null", '
-    '"focus": "short name of the component the user is pointing at, e.g. \\"HDMI port\\"", '
+    '"focus": "short name of the component the user is showing, e.g. \\"power button\\"", '
     '"components": ["every visible component, left to right"], "visible_text": ["printed text you can read"], '
     '"summary": "one sentence describing the frame"}'
 )

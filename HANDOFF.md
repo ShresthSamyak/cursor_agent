@@ -54,9 +54,11 @@ Models (all optional; the agent degrades to rules-only):
   CUDA 12 / cuDNN 9 DLLs from a pip `nvidia-*` wheel or an existing PyTorch install
   (`media._cuda_dll_dirs`; override with `TRAIL_CUDA_DLL_DIR`). CPU-only hosts use `base.en`.
   Models download from Hugging Face on first use (~145 MB base, ~480 MB small).
-* **Vision + local model**: Ollama `gemma3:4b` (pulled, 3.3 GB). Gemma 4 (PDF's choice) needs a newer
-  Ollama than the installed 0.21.2; after upgrading Ollama set `TRAIL_OLLAMA_MODEL`/`TRAIL_VISION_MODEL`
-  (e.g. `gemma4:e4b-it-qat`). Start the server with `ollama serve` if the tray app is not serving.
+* **Vision + local model**: Ollama **0.34.4** with `gemma4:e4b-it-qat` (Gemma 4 E4B, 4-bit QAT, 6.1 GB, the PDF's model),
+  default in `trail/core/llm/select.py`; `gemma3:4b` was deleted. Runs 100% on the RTX 4060, ~1.3–1.9 s per frame.
+  Notes: requests send `think: false` (Gemma 4 otherwise spends its token budget on hidden reasoning and returns
+  empty content); if Ollama starts before its CUDA libraries are present (e.g. mid-upgrade) it falls back to CPU and
+  every vision call times out — restart the Ollama app and check `ollama ps` shows `100% GPU`.
 * **Cloud** (optional): `SECRET_GEMINI_API_KEY` → Gemini (text, image, audio);
   `SECRET_OPENROUTER_API_KEY` → OpenRouter. The plain `OPENROUTER_API_KEY` in this machine's
   environment is **not** auto-used (costs money); opt in with `TRAIL_LLM=openrouter`.
@@ -221,7 +223,7 @@ Left, needing a person or a decision:
 * Deck `CollegeName_TeamName_Submission.pptx` — needs the college and team names.
 * Set the real team name in `submission.yaml`; register `SECRET_GEMINI_API_KEY` on the portal if cloud audio/vision is wanted on the evaluator.
 * Release tag `PRISM_GENAI_HACKATHON_Y2026` on the final commit (team's call).
-* Optional: upgrade Ollama for Gemma 4 (PDF's model); UIA reader and live speech are written but unexercised.
+* UIA reader and live speech are written but unexercised.
 
 Earlier notes:
 
@@ -255,7 +257,7 @@ Earlier notes:
 - First kit run (rules only): 87.0 (all text 100; audio/visual pending models).
 - Set up `.venv`; faster-whisper (pinned PyAV 14.2); Whisper base.en/small.en downloaded; Ollama `gemma3:4b` pulled (Gemma 4 needs newer Ollama).
 - Calibrated STT: domain prompt + GPU small.en makes the ambiguous pub_05 clip read "Boston" at 0.15 confidence → clarification; pub_06 repair works.
-- Vision: gemma3:4b identifies "HDMI port" reliably (~1.5 s); per-event-loop model clients; bounded vision wait with ask-fallback.
+- Vision (then gemma3:4b): identifies "HDMI port" reliably (~1.5 s); per-event-loop model clients; bounded vision wait with ask-fallback.
 - Fixed harness early-delivery latency (first reply held 22 ms real time).
 - Public set 100.0 at scale 1 (run_local ×2) and **official evaluator weighted 100.0 over 3 reps**.
 - Wrote 20-scenario own suite + generator; fixed bugs it exposed (bare-name "Okay", claim guard on "booked", tool-name routing overreach, compensation of committed writes, ticket offer text, nested-object arg type check, negated commands).
@@ -278,3 +280,4 @@ Earlier notes:
 - Wrote the stress suite and fixed the gaps it found (general, not scenario-specific): positional from/to enum args + currency synonyms; `code` arg class (flight/order numbers → 'UA 212'); proper-noun extraction for unclassified required strings ('at Luigi's'); phrase synonyms ('on time') + fillability-aware routing threshold (≥2 if all required args fillable); explicit 'high priority' severity; 'get me on/put me on' as booking. Regression: Trail suite 100, public text 100, 0 false stops/dup writes/errors.
 - Found the Ollama server had stopped (pub_07 fell to 47.7 in an official 1-rep run); restarted `ollama serve`; pub_07 100 twice.
 - Stress suite added to pytest and `trail eval --suite stress|everything`. Official evaluator re-run (scale 1, 3 reps): weighted 100.0. pytest: 105 passed.
+- Upgraded Ollama 0.21.2 → 0.34.4 (winget); pulled `gemma4:e4b-it-qat` (watchdog restarted stalled pulls); restarted Ollama because the server had started mid-install without CUDA (was 100% CPU, vision timed out); added `think: false` to Ollama requests; vision prompt now asks for the component in sharpest focus / most prominent and to read its label (Gemma 4 otherwise named the geometrically central USB port), and its example no longer says 'HDMI port'. Official evaluator with Gemma 4 (scale 1, 3 reps): weighted 100.0, 27/27. Deleted `gemma3:4b`.

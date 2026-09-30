@@ -16,8 +16,8 @@ import os
 from .cloud import GeminiLLM, OpenAICompatLLM
 from .ollama import OllamaLLM
 
-DEFAULT_OLLAMA_TEXT = "gemma3:4b"
-DEFAULT_OLLAMA_VISION = "gemma3:4b"
+DEFAULT_OLLAMA_TEXT = "gemma4:e4b-it-qat"
+DEFAULT_OLLAMA_VISION = "gemma4:e4b-it-qat"
 DEFAULT_GEMINI = "gemini-2.5-flash"
 DEFAULT_OPENROUTER = "google/gemini-2.5-flash"
 

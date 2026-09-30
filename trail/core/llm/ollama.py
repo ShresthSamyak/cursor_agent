@@ -80,6 +80,7 @@ class OllamaLLM:
         body = {
             "model": model, "stream": False, "format": "json", "keep_alive": "30m",
             "messages": [{"role": "system", "content": system}, message],
+            "think": False,          # Gemma 4 and other thinking models: answer directly
             "options": {"temperature": 0, "seed": 7, "num_predict": 400},
         }
         try:
