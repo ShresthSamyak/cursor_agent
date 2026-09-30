@@ -28,7 +28,7 @@ class Tier(IntEnum):
 _CLAIMS: dict[str, tuple[str, ...]] = {
     "book": (r"\bbooked\b", r"\breserved\b", r"booking (?:is )?confirmed", r"you'?re (?:all )?set\b", r"confirmed your"),
     "ticket": (r"ticket (?:id|created|opened|filed|number)", r"\b(?:opened|filed|created|raised|logged) (?:a |the |your )?(?:support )?ticket"),
-    "cancel": (r"booking(?: [A-Z]{2,4}-\w+)? (?:is |was |has been )?cancell?ed", r"cancell?ed (?:your|the) booking"),
+    "cancel": (r"booking(?: [a-z]{2,4}-\w+)? (?:is |was |has been )?cancell?ed", r"cancell?ed (?:your|the) booking"),
     "generic": (r"\b(?:has|have) been (?:created|submitted|scheduled|sent|placed|ordered|charged|paid|processed|updated|deleted)\b",
                 r"\b(?:i|we) (?:have |'ve )?(?:created|submitted|scheduled|sent|placed|ordered|charged|paid|processed|deleted)\b"),
 }

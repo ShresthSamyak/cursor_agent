@@ -116,7 +116,7 @@ class GoalStack:
         return goal
 
     def find_parked(self, hint: str | None) -> Goal | None:
-        parked = self.parked()
+        parked = self.parked() or [g for g in self.goals[:-1] if g.status == DONE][-3:]
         if not parked:
             return None
         if hint:
