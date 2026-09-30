@@ -212,7 +212,7 @@ class Runtime:
             self.metrics.fillers += 1
         t = self.turn
         # Fixed hold rather than a clock estimate: early delivery also skews the estimated scale.
-        early = 30.0 if (t is not None and not t.responded and self.config.mode == "harness") else 0.0
+        early = 1.0 if (t is not None and not t.responded and self.config.mode == "harness") else 0.0
         self._mark_responded()
         self.last_output = text if kind != ACK else self.last_output
         if self.config.mode == "desktop" and kind == FINAL:
@@ -221,7 +221,8 @@ class Runtime:
             # The harness can deliver an event a few ms before its timestamp (timer granularity);
             # a reply stamped earlier than the turn it answers is not counted, so hold it briefly.
             snapshot = self._snapshot()
-            self._timer(f"emit:{t.seq}:{kind}", min(early, 60.0), "emit", self._deps("turn"), (kind, text, snapshot))
+            # Real time, not virtual: the early wake-up is a property of the host's timer (~16 ms on Windows).
+            self._timer(f"emit:{t.seq}:{kind}", 0.0, "emit", self._deps("turn"), (kind, text, snapshot), real_s=0.022)
         else:
             self._out("speak", kind=kind, text=text, snapshot=self._snapshot())
         self._audit("say", kind=kind, text=text)
@@ -262,11 +263,12 @@ class Runtime:
         task.add_done_callback(self._workers.discard)
         return task
 
-    def _timer(self, key: str, virtual_ms: float, kind: str, deps: tuple[tuple[str, int], ...], payload: Any = None) -> None:
+    def _timer(self, key: str, virtual_ms: float, kind: str, deps: tuple[tuple[str, int], ...], payload: Any = None,
+               *, real_s: float | None = None) -> None:
         old = self._timers.pop(key, None)
         if old:
             old.cancel()
-        delay = self.clock.real_seconds(virtual_ms)
+        delay = real_s if real_s is not None else self.clock.real_seconds(virtual_ms)
 
         async def fire() -> None:
             await asyncio.sleep(delay)

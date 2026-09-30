@@ -66,8 +66,12 @@ def test_generated_reskins(template, seed):
     rng = random.Random(seed)
     for i in range(4):
         sc = TEMPLATES[template](rng, i)
-        _, score, _ = run_kit(sc)
-        assert score["total"] >= 97.0, (sc["scenario_id"], sc["events"], score)
+        trace, score, _ = run_kit(sc)
+        if score["total"] < 97.0:
+            from harness.scorer import format_report
+            detail = [(e["kind"], round(e["t_ms"]), e.get("action") or e.get("event_type"), str(e.get("payload") or e.get("args"))[:90])
+                      for e in trace if e["kind"] in {"action", "event", "tool_completed", "tool_cancelled"}]
+            raise AssertionError(format_report(score) + chr(10) + chr(10).join(map(str, detail)))
 
 
 def test_naive_ablation_rung_loses_context_on_correction():
