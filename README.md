@@ -16,7 +16,6 @@ Chrome, VS Code and your other apps. It remembers what you looked at, and it han
 | 🎬 **Demo video** | **[youtu.be/UeZS373sl90](https://youtu.be/UeZS373sl90)** (under 5 min) · backup recording in the repo: [`docs/demo/trail_demo.mp4`](docs/demo/trail_demo.mp4) |
 | 📊 **Presentation** | [`an interruptible cursor agent.pptx`](an%20interruptible%20cursor%20agent.pptx) (repo root) |
 | 🏷️ **Release tag** | [`PRISM_GENAI_HACKATHON_Y2026`](../../tree/PRISM_GENAI_HACKATHON_Y2026) |
-| 📄 **Design document** | [`Trail — Interruptible Cursor Agent.pdf`](Trail%20%E2%80%94%20Interruptible%20Cursor%20Agent.pdf) |
 | 🧭 **Engineering log** | [`HANDOFF.md`](HANDOFF.md): status, decisions, verification and the full change log |
 
 ### Submission checklist
@@ -128,7 +127,7 @@ All numbers come from files in [`reports/`](reports/) and can be reproduced with
 | **Official evaluator** `python eval_submission.py . --reps 3` (time scale 1, median of 3) | **Weighted 100.0 / 100.** 27/27 runs at 100; text 100, audio 100, visual 100 ([report](reports/eval_submission_scale1.txt)) |
 | Kit reference agent, for comparison | ≈ 52–57 / 100 |
 | All 47 scenarios with real models (kit public 9 + Trail interruption suite 20 + hidden-style stress suite 18) | **47/47 at 100** ([report](reports/metrics_models.md)) |
-| Time to yield, p50 / p95 (virtual ms) | 38 / 52 (target from the design document: < 150 ms) |
+| Time to yield, p50 / p95 (virtual ms) | 38 / 52 (target: < 150 ms) |
 | Backchannel false stops · duplicate writes · stale-output leaks · runtime errors | **0 · 0 · 0 · 0** |
 | Heckler round: 5 interruptions in 30 s, scored by the kit scorer | Trail **100** vs naive cancel-and-restart **54.5** |
 | Unit and end-to-end tests (`pytest`) | **127 passed** |
