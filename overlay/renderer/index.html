@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trail overlay</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Cursor layer: ring + bubble follow the pointer (Electron passes the OS cursor; the browser build uses the mouse). -->
+  <div id="cursor-layer" aria-hidden="false">
+    <div id="ring" class="ring" hidden></div>
+    <div id="bubble" class="bubble" hidden>
+      <div class="bubble-ack" id="bubble-ack"></div>
+      <div class="bubble-text" id="bubble-text"></div>
+      <div class="bubble-meta" id="bubble-meta"></div>
+    </div>
+    <div id="notice" class="notice" hidden role="alert"></div>
+  </div>
+
+  <aside id="panel" class="panel">
+    <header class="panel-head">
+      <div class="brand"><span class="dot" id="conn-dot"></span><strong>Trail</strong><span id="conn-text" class="muted">connecting</span></div>
+      <div class="chips">
+        <span class="chip" id="chip-app">no app</span>
+        <span class="chip" id="chip-phase">listening</span>
+        <button class="toggle" id="btn-agent" aria-pressed="true" title="Agent mode (Ctrl+Alt+T)">Agent on</button>
+        <button class="toggle" id="btn-perception" aria-pressed="true" title="Perception (Ctrl+Alt+P)">Perceiving</button>
+      </div>
+    </header>
+
+    <section class="latency" aria-label="Latency">
+      <div><span class="k">Time to yield</span><span class="v" id="lat-yield">–</span></div>
+      <div><span class="k">Last response</span><span class="v" id="lat-resp">–</span></div>
+      <div><span class="k">Forks served</span><span class="v" id="lat-forks">0</span></div>
+    </section>
+
+    <section class="tree-wrap" aria-label="Multiverse tree">
+      <h2>Multiverse</h2>
+      <div id="tree" class="tree"></div>
+    </section>
+
+    <section class="ask">
+      <form id="ask-form" autocomplete="off">
+        <input id="ask-input" placeholder="Ask Trail… (try “which should I book?”)" aria-label="Ask Trail">
+        <button type="submit">Ask</button>
+      </form>
+      <div class="actions">
+        <button id="btn-stop" title="Esc">Stop</button>
+        <button id="btn-goon">Go on</button>
+        <button id="btn-notnow">Not now</button>
+        <button id="btn-audit">Audit</button>
+      </div>
+    </section>
+
+    <section id="audit" class="audit" hidden aria-label="Session audit">
+      <h2>This session</h2>
+      <div class="audit-cols">
+        <div><h3>Read</h3><ul id="audit-read"></ul></div>
+        <div><h3>Sent to the cloud</h3><ul id="audit-sent"></ul></div>
+      </div>
+      <p class="muted small">Memory is RAM-only and cleared when the session ends. Sensitive fields never leave the page.</p>
+    </section>
+  </aside>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

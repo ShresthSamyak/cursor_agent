@@ -27,6 +27,7 @@ def main() -> None:
     br = sub.add_parser("bridge", help="run the desktop runtime behind the localhost WebSocket bridge")
     br.add_argument("--port", type=int, default=8765)
     br.add_argument("--corpus", default=None, help="travel corpus JSON (defaults to the bundled demo fares)")
+    br.add_argument("--dev", action="store_true", help="use the fixed development token trail-dev")
     dm = sub.add_parser("demo", help="scripted replay of a demo act (no perception needed)")
     dm.add_argument("act", choices=["act1", "act2", "act3", "heckler", "all"])
     dm.add_argument("--speed", type=float, default=1.0)
@@ -53,7 +54,7 @@ def main() -> None:
     if args.command == "bridge":
         from .desktop.bridge import main as bridge_main
 
-        bridge_main(port=args.port, corpus=args.corpus)
+        bridge_main(port=args.port, corpus=args.corpus, dev=args.dev)
         return
     if args.command == "demo":
         from .desktop.demo import main as demo_main

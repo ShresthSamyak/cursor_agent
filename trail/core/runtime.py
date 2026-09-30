@@ -1249,6 +1249,7 @@ class Runtime:
                         return
             if step.needs_auth and not self._authorized(goal, spec):
                 self.metrics.held_at_barrier += 1
+                self._out("status", code="barrier_hold", meta={"tool": spec.name, "goal": goal.id, "tag": self.manifest.tag(spec.name)})
                 self._ask(goal, (f"confirm:{spec.name}",), _confirm_text(goal, spec, step.args or {}))
                 return
             self._ack(goal, reason, changed)

@@ -194,7 +194,7 @@ Phase 3 — desktop hero: **in progress**
 - [x] Booking/afford/code-mentor logic (`trail/core/specialists.py`)
 - [x] Specialists + desktop events wired into `Runtime` (dwell/select → trail, doc_change → mentor findings as arbiter notices with staleness re-check, terminal → pre-diagnosis, typing pause → HIGH notices + resume paused speech, save/test_run/app_switch → NORMAL notices, trail intents compare/afford/book, forks over the trail)
 - [x] Scripted demo replay `python -m trail demo act1|act2|act3|all|heckler` (`trail/desktop/demo.py`) — every Act 1–3 beat verified, see §2
-- [ ] Localhost WebSocket bridge `trail/desktop/bridge.py` (+ HTTP for demo pages, overlay, corpus)
+- [x] Localhost WebSocket bridge `trail/desktop/bridge.py` (`python -m trail bridge [--dev]`): loopback-only, token auth (written to %LOCALAPPDATA%/Trail/bridge.token), 256 KB frames, 200 ev/s rate limit, perception/agent-mode gate, controls (agent_mode, perception, specialist, teach/fix mode, confirm, audit), 20 Hz state frames; HTTP serves /demo/*, /corpus/travel.json, /overlay/, /health. Smoke-tested with a scripted client
 - [ ] Chrome extension + demo pages (being built by a background agent → `extensions/chrome/`, `trail/desktop/web/`)
 - [ ] Overlay: bubble, ring, multiverse tree, latency, audit (background agent → `overlay/`)
 - [ ] Voice: VAD barge-in + streaming STT + TTS (`trail/desktop/speech.py`)
@@ -247,3 +247,4 @@ Phase 4 — second act and submission: **not started / in progress**
 - Wired specialists and desktop events into the runtime (trail intents, mentor notices via arbiter, terminal pre-diagnosis, trail forks, payment confirm text, chain planner hold→book→pay).
 - Wrote `trail/desktop/demo.py`; fixed bugs it found: claim guard matched "pre-booked" (now `(?<![-\w])booked`), stale trail forks (killed on new fare evidence, respawned after the pivot; fork hits counted in metrics), typing pause now resumes paused speech, prose tool results spoken as-is, trail goal label, trail_book ack.
 - Stopped the background client-build workflow at the usage limit (partial files on disk, unreviewed). Tests: 87 passed. Heckler: Trail 100 vs naive 54.5.
+- Wrote `trail/desktop/bridge.py`; smoke test passed (health, corpus, bad token rejected, bad frame handled, streamed trail answer + state frames). Added node_modules/ and extension build dirs to .gitignore. CLI `bridge --dev`.

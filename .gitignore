@@ -11,3 +11,7 @@ tmp/
 .env
 .env.*
 !.env.example
+node_modules/
+extensions/*/out/
+extensions/*/dist/
+*.vsix
