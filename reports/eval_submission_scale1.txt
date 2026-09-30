@@ -1,0 +1,22 @@
+==============================================================
+STAGE 1 — package validation
+  [OK] team='Trail'  entry_point='agent.agent:ParticipantAgent'
+  [OK] requirements declared: ['pydantic>=2.12,<3', 'httpx>=0.27', 'numpy>=1.26', 'pillow>=10', 'faster-whisper>=1.1', 'av>=12,<15', 'google-genai>=1.0'] (installed by the portal, not by this script)
+STAGE 2 — contract smoke test
+  [OK] agent boots, consumes events, stays alive
+STAGE 3 — scored evaluation (reps=3, time_scale=1.0, wall_cap=120.0s, setup_cap=300.0s, median per scenario)
+  100.0  (reps: 100.0, 100.0, 100.0)  [text/L1 x1.00]  pub_01_text_simple
+  100.0  (reps: 100.0, 100.0, 100.0)  [text/L2 x1.00]  pub_02_text_interrupt
+  100.0  (reps: 100.0, 100.0, 100.0)  [text/L2 x1.00]  pub_03_text_chained_booking
+  100.0  (reps: 100.0, 100.0, 100.0)  [text/L1 x1.00]  pub_04_text_no_tool
+  100.0  (reps: 100.0, 100.0, 100.0)  [audio/L2 x1.50]  pub_05_audio_asr_ambiguity
+  100.0  (reps: 100.0, 100.0, 100.0)  [audio/L2 x1.50]  pub_06_audio_disfluency
+  100.0  (reps: 100.0, 100.0, 100.0)  [visual/L2 x1.50]  pub_07_visual_port_lookup
+  100.0  (reps: 100.0, 100.0, 100.0)  [text/L3 x1.25]  pub_08_text_tool_failure
+  100.0  (reps: 100.0, 100.0, 100.0)  [text/L2 x1.00]  pub_09_text_unseen_tool
+--------------------------------------------------------------
+  plain average : 100.0
+  by modality   : text=100.0  audio=100.0  visual=100.0
+  WEIGHTED SCORE: 100.0   (audio/visual x1.5, L3/L4 x1.25)
+  wrote reports/eval_submission_scale1.json
+==============================================================
