@@ -1,0 +1,49 @@
+{
+  "_note": "Fictional airline and fares for the demo (PDF risk table: demo on a local results page for a fictional airline). Not real prices.",
+  "airline": "Skylark Air",
+  "currency": "INR",
+  "routes": {
+    "Chandigarh → Goa": {
+      "origin": "Chandigarh", "destination": "Goa", "origin_code": "IXC", "destination_code": "GOI",
+      "fares": [
+        {"flight_id": "SK-IXC-GOI-FRI", "date": "2026-10-02", "day": "Friday", "depart": "07:10", "arrive": "10:05", "stops": 0, "price": 6400, "seats_left": 9},
+        {"flight_id": "SK-IXC-GOI-SAT", "date": "2026-10-03", "day": "Saturday", "depart": "09:40", "arrive": "12:35", "stops": 0, "price": 5000, "seats_left": 4},
+        {"flight_id": "SK-IXC-GOI-SUN", "date": "2026-10-04", "day": "Sunday", "depart": "18:20", "arrive": "21:15", "stops": 0, "price": 11000, "seats_left": 2},
+        {"flight_id": "SK-IXC-GOI-MON", "date": "2026-10-05", "day": "Monday", "depart": "06:30", "arrive": "09:25", "stops": 0, "price": 4500, "seats_left": 7},
+        {"flight_id": "SK-IXC-GOI-TUE", "date": "2026-10-06", "day": "Tuesday", "depart": "13:15", "arrive": "16:10", "stops": 0, "price": 5200, "seats_left": 12}
+      ]
+    },
+    "Delhi → Goa": {
+      "origin": "Delhi", "destination": "Goa", "origin_code": "DEL", "destination_code": "GOI",
+      "fares": [
+        {"flight_id": "SK-DEL-GOI-FRI", "date": "2026-10-02", "day": "Friday", "depart": "08:00", "arrive": "10:35", "stops": 0, "price": 5800, "seats_left": 6},
+        {"flight_id": "SK-DEL-GOI-SAT", "date": "2026-10-03", "day": "Saturday", "depart": "11:25", "arrive": "14:00", "stops": 0, "price": 6900, "seats_left": 3}
+      ]
+    }
+  },
+  "fare_rules": {
+    "saver": {"refund": "Refundable up to 48 hours before departure, minus a ₹1,500 fee.", "change": "Date change allowed for ₹2,000 plus any fare difference.", "applies_to": "all fares under ₹6,000"},
+    "flex": {"refund": "Fully refundable up to 24 hours before departure.", "change": "Free date change once.", "applies_to": "fares ₹6,000 and above"}
+  },
+  "baggage": {
+    "cabin": "One cabin bag up to 7 kg (55 x 35 x 25 cm) plus one small personal item.",
+    "checked": "15 kg checked baggage included on every fare. Extra 5 kg costs ₹1,800 when pre-booked.",
+    "sports": "Surfboards and bicycles need pre-booking, ₹2,500 each way."
+  },
+  "policy": {
+    "refund_policy": "Saver fares are refundable up to 48 hours before departure minus a ₹1,500 fee; flex fares are fully refundable up to 24 hours before departure.",
+    "check_in": "Web check-in opens 48 hours and closes 2 hours before departure.",
+    "infants": "Infants under 2 travel on an adult's lap for ₹1,500."
+  },
+  "budget_sheet": {
+    "title": "October trip budget",
+    "rows": [
+      {"item": "Flights", "planned": 12000, "spent": 0},
+      {"item": "Hotel (3 nights)", "planned": 9000, "spent": 3000},
+      {"item": "Food", "planned": 6000, "spent": 0},
+      {"item": "Activities", "planned": 4000, "spent": 0}
+    ],
+    "remaining_label": "Remaining for flights",
+    "remaining": 5000
+  }
+}
