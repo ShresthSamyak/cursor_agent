@@ -31,6 +31,8 @@ The PDF's three differentiators and where they live:
 | Trail's own interruption suite (20 scenarios, kit format), rules only, scale 4 | 99.4 average (19 × 100, trail_03 99.8, trail_14 89.1 in that run) | `reports/metrics_rules.md` |
 | Unit + e2e tests `pytest` (rules only, deterministic) | **87 passed** | `tests/` |
 | PDF zero-targets (rules-only run): backchannel false stops / duplicate writes / runtime errors | 0 / 0 / 0 | `reports/metrics_rules.md` |
+| Desktop demo replay `python -m trail demo all --speed 2` | All Act 1–3 beats correct: self-interrupt on cheaper Monday fare, fork hit on "two passengers", baggage detour + back, hold→book then payment held at barrier, afford join (₹9,000 vs ₹5,000 left), mentor waits for typing pause, drops fixed warning, secret interrupts instantly, pre-diagnosis hit. Runtime errors 0 | console |
+| Heckler finale `python -m trail demo heckler` (trail_18, kit scorer) | Trail 100.0 vs naive cancel-and-restart 54.5 | console |
 
 Public-set scores by modality (official run): text 100, audio 100, visual 100.
 
@@ -96,7 +98,7 @@ trail/core/               Scored core — no desktop imports
   nlg.py                  Deterministic phrasing: content-aware acks, questions, grounded finals (flights, manual, ticket, cancel, generic results)
   media.py                STT (faster-whisper, word confidences, domain prompt, hallucination filter, GPU DLL discovery), frame embedding (pixel descriptor), vision via model
   trail.py                Session trail store, ranking score(e)=match·e^(−Δt/τ)·(1+ln(1+d/d0)), referents, fares, budget cell
-  specialists.py          Booking over the trail, afford join, CodeMentor (secrets/bugs/drift/lint, staleness, terminal pre-diagnosis) — NEW, not yet wired into runtime
+  specialists.py          Booking over the trail, afford join, CodeMentor (secrets/bugs/drift/lint, staleness, terminal pre-diagnosis); wired into runtime
   privacy.py              Redaction (secrets, Luhn cards), sensitive-target filter
   clock.py                Virtual clock estimate from event timestamps
   config.py               RuntimeConfig + Features (ablation ladder)
@@ -107,6 +109,7 @@ trail/__main__.py         CLI: eval, ablate, bridge, demo
 trail/desktop/            Demo layer (in progress)
   corpus/travel.json      Fictional "Skylark Air" fares (Chandigarh→Goa Fri ₹6,400 / Sat ₹5,000 / Sun ₹11,000 / Mon ₹4,500 / Tue ₹5,200), rules, baggage, budget sheet (₹5,000 left)
   tools.py                DesktopTools executor + manifest: fare_search, hold_fare (reversible), book_fare (compensable via cancel_booking), pay_booking (irreversible), baggage_policy_lookup
+  demo.py                 Scripted replay of demo acts + heckler comparison
 scripts/make_trail_scenarios.py   Generates scenarios_trail/ with interrupt times derived from the mock's deterministic delays
 scenarios_trail/          20 own scenarios (kit format) — see §5
 harness/ run_local.py eval_submission.py scenarios/ audio/ frames/ docs/kit/   Kit files (vendored, unchanged; see §6)
@@ -188,8 +191,9 @@ Phase 2 — speculation and tool safety: all done (fork manager with budgets and
 Phase 3 — desktop hero: **in progress**
 - [x] Fictional travel corpus (`trail/desktop/corpus/travel.json`)
 - [x] Desktop saga tools (`trail/desktop/tools.py`)
-- [x] Booking/afford/code-mentor logic (`trail/core/specialists.py`) — not yet wired into the runtime
-- [ ] Wire specialists + desktop events (dwell, doc_change, terminal, typing, save) into `Runtime` (next task)
+- [x] Booking/afford/code-mentor logic (`trail/core/specialists.py`)
+- [x] Specialists + desktop events wired into `Runtime` (dwell/select → trail, doc_change → mentor findings as arbiter notices with staleness re-check, terminal → pre-diagnosis, typing pause → HIGH notices + resume paused speech, save/test_run/app_switch → NORMAL notices, trail intents compare/afford/book, forks over the trail)
+- [x] Scripted demo replay `python -m trail demo act1|act2|act3|all|heckler` (`trail/desktop/demo.py`) — every Act 1–3 beat verified, see §2
 - [ ] Localhost WebSocket bridge `trail/desktop/bridge.py` (+ HTTP for demo pages, overlay, corpus)
 - [ ] Chrome extension + demo pages (being built by a background agent → `extensions/chrome/`, `trail/desktop/web/`)
 - [ ] Overlay: bubble, ring, multiverse tree, latency, audit (background agent → `overlay/`)
@@ -204,12 +208,12 @@ Phase 4 — second act and submission: **not started / in progress**
 
 ## 9. In flight right now
 
-* Background workflow `trail-desktop-clients` (run `wf_c1fff3fe-8a3`, 4 agents): Chrome extension + demo pages,
-  VS Code extension + demo workspace, overlay (renderer + Electron), and a hidden-set stress tester.
-  Their directories did not exist yet at the last check. When they finish: review, run, integrate, and
-  record results here.
-* Next for me: wire specialists and desktop events into `Runtime`, write `bridge.py`, `demo.py`,
-  `speech.py`, `uia.py`; then the ablation chart; then act on stress findings.
+* Background workflow `trail-desktop-clients` (run `wf_c1fff3fe-8a3`) was **stopped** at a usage limit. It left partial
+  output in `extensions/chrome/`, `extensions/vscode/`, `overlay/`, `trail/desktop/web/` (not yet reviewed, may be incomplete);
+  the stress tester produced nothing (`scenarios_stress/` absent). Resume with
+  `Workflow({scriptPath: ".../trail-desktop-clients-wf_c1fff3fe-8a3.js", resumeFromRunId: "wf_c1fff3fe-8a3"})` or review by hand.
+* Next: review the partial client code; write `trail/desktop/bridge.py` (WebSocket + HTTP), `speech.py`, `uia.py`;
+  ablation chart; hidden-set stress suite and fixes.
 
 ## 10. Known issues and risks
 
@@ -240,3 +244,6 @@ Phase 4 — second act and submission: **not started / in progress**
 - Added `trail/eval.py` + CLI (`eval`, `ablate`), `reports/metrics_rules.md`.
 - Wrote `docs/bridge-protocol.md`, travel corpus, `trail/core/specialists.py`, `trail/desktop/tools.py`; launched background build of Chrome/VS Code/overlay/stress suite.
 - Created this HANDOFF.md (user request: keep it updated after every change).
+- Wired specialists and desktop events into the runtime (trail intents, mentor notices via arbiter, terminal pre-diagnosis, trail forks, payment confirm text, chain planner hold→book→pay).
+- Wrote `trail/desktop/demo.py`; fixed bugs it found: claim guard matched "pre-booked" (now `(?<![-\w])booked`), stale trail forks (killed on new fare evidence, respawned after the pivot; fork hits counted in metrics), typing pause now resumes paused speech, prose tool results spoken as-is, trail goal label, trail_book ack.
+- Stopped the background client-build workflow at the usage limit (partial files on disk, unreviewed). Tests: 87 passed. Heckler: Trail 100 vs naive 54.5.
