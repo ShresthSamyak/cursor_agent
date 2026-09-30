@@ -29,7 +29,7 @@ The PDF's three differentiators and where they live:
 | `run_local.py --all --time-scale 1` with models (2 consecutive runs) | 100.0 / 100 both runs | console (re-run to reproduce) |
 | Kit reference agent (for comparison) | ~52–57 / 100 per kit docs | `agent/baseline.py` (`--agent agent.agent:BaselineAgent`) |
 | Trail's own interruption suite (20 scenarios, kit format), rules only, scale 4 | 99.4 average (19 × 100, trail_03 99.8, trail_14 89.1 in that run) | `reports/metrics_rules.md` |
-| Unit + e2e tests `pytest` (rules only, deterministic) | **105 passed** (incl. 18 stress cases) | `tests/` |
+| Unit + e2e tests `pytest` (rules only, deterministic) | **127 passed** (incl. 18 stress cases, mic robustness, spoken desktop flows) | `tests/` |
 | Hidden-style stress suite (18), rules only | 18/18 at 100 | `scenarios_stress/` |
 | PDF zero-targets (rules-only run): backchannel false stops / duplicate writes / runtime errors | 0 / 0 / 0 | `reports/metrics_rules.md` |
 | Desktop demo replay `python -m trail demo all --speed 2` | All Act 1–3 beats correct: self-interrupt on cheaper Monday fare, fork hit on "two passengers", baggage detour + back, hold→book then payment held at barrier, afford join (₹9,000 vs ₹5,000 left), mentor waits for typing pause, drops fixed warning, secret interrupts instantly, pre-diagnosis hit. Runtime errors 0 | console |
@@ -203,7 +203,7 @@ Phase 3 — desktop hero: **in progress**
 - [x] Chrome MV3 extension `extensions/chrome/` (TypeScript → dist/ via `npm run build`): hover (debounced), dwell 350 ms, fast-transit filter, date+price pairing, context from aria-label/data-route/heading, sensitive-field skip, banking/password-manager auto-pause, incognito not allowed, Esc → cancel, toolbar ON/OFF, options page (URL/token), toast fallback. Content script verified on the demo page (Monday cell → hover+dwell with route context; card field → nothing). Not yet loaded as an unpacked extension end-to-end
 - [x] Overlay renderer `overlay/renderer/` (index.html, styles.css, app.js + model/connection/demo/redact modules): cursor bubble with streaming + duck, perception ring, notice card by tier, multiverse tree (goal trunk, parked goals, saga calls tagged reversible/compensable/irreversible, barrier lock, fork branches lit green on hit), latency counters, audit panel, ask box + Stop/Go on/Not now, `?demo=1` offline replay. Verified live in Chrome at http://127.0.0.1:8765/overlay/?token=trail-dev (fork-hit answer rendered, served branch lit)
 - [x] Electron shell `overlay/electron/` (main.js, preload.js, package.json): transparent frameless always-on-top click-through window, OS cursor at 30 Hz, panel toggles interactivity, hotkeys Ctrl+Alt+T/P/Esc. Syntax-checked; **Electron not installed/launched** (`cd overlay/electron && npm install && npm start`). `overlay/README.md` written
-- [x] Voice `trail/desktop/speech.py` (`python -m trail speech`): energy VAD with adaptive floor (onset in 2×30 ms frames → `vad_start`), streaming `speech_partial` every ~600 ms + `speech_final` at end via faster-whisper, SAPI TTS killed instantly on `duck`. VAD unit-checked; **live microphone path not exercised** (needs a person speaking). `sounddevice` installed in .venv
+- [x] Voice `trail/desktop/speech.py` (`python -m trail speech [--wake]`): energy VAD calibrated on 1 s of room noise at startup (onset = max(3× floor, 1.5× ambient p98, 0.006), 3×30 ms frames → `vad_start`; ≥ 240 ms of loud frames for an utterance to count), louder onset needed while Trail's own TTS plays (no echo barge-in), gain-normalised audio, streaming `speech_partial` ~600 ms + `speech_final` via faster-whisper with a `Trail.` + domain prompt; Whisper stock hallucinations ("Thank you.", "Thanks for watching", "I'm sorry"…) and low-confidence segments dropped; `--wake` gate ("Trail, …"/"Hey Trail …" + follow-ups within 8 s of Trail speaking). SAPI TTS killed instantly on `duck`. **Live-mic tested** (see §9); `TRAIL_MIC_MIN_RMS` overrides the onset level
 - [x] UI Automation reader `trail/desktop/uia.py` (`python -m trail uia`): element under cursor, dwell 350 ms, grid-cell row/column context, app_switch, sensitive-field skip. **Not run** (needs `pip install pywinauto` in .venv)
 Phase 4 — second act and submission: **not started / in progress**
 - [x] VS Code extension `extensions/vscode/` (TypeScript, compiles to out/ with tsc): hover + dwell, selection, typing bursts, doc_change on typing pause and immediately on a pasted key, save, test_run (tasks + shell integration), terminal output via shell integration, window focus; secrets redacted in the editor, only `secret_lines` sent; excluded-file globs; notices as notifications with 'Not now' + gutter decorations; status-bar waiting badge; commands (declare intent, ask, not now, teach/fix, toggle perception, stop). Compiles; **not yet run inside VS Code (F5)**
@@ -229,6 +229,30 @@ Verified live on this machine (2026-09-30, full end-to-end round):
 * **UIA reader** (pywinauto + psutil installed) connects; app_switch and dwell received.
 * **Electron overlay** (`npm install` done in `overlay/electron/`) connects and renders on top: panel with fork tree ("2 passengers ✓ served"), cursor ring, answer bubble "served from a speculative fork".
 * pytest **105 passed** after all edits.
+
+Second live round ("fix them", 2026-09-30) — found and fixed with a real microphone and the live bridge:
+* **Room audio triggered Trail** (a video playing nearby): 10 phantom utterances in ~40 s ("Thank you very much.", "In the whole video."), each answered
+  with the capabilities menu. Fixed in layers: calibrated VAD + min voiced duration + hallucination/low-confidence filter (speech.py);
+  runtime ignores mic speech (`source == "speech"`) that is not a request (the existing `spoken` gate was never wired for desktop) and
+  won't recite the fallback menu twice within 20 s; `--wake` mode for noisy rooms. Result: 45 s of the same room → 0 replies in wake mode.
+  Note: speaker→mic loopback can't test recognition on this laptop (the AMD mic array's echo cancellation removes TTS), so a wake request
+  was verified by feeding SAPI-rendered speech at laptop-mic level over recorded room noise through the client's own VAD/Whisper/gates
+  into the live bridge: all three utterances transcribed exactly, wake word stripped, follow-up accepted.
+* **Direct spoken fare questions answered wrongly**: "what's the cheapest flight from Chandigarh to Goa?" → "SK-IXC-GOI-FRI at 0 …"
+  (generic list formatter took the ID as the name and `stops: 0` as the price). `nlg.describe_result` now names items by
+  name/title/label/day/date, prices them by a price-like key (currency from the result), and adds "cheapest is …" and the total for N passengers.
+  DesktopTools `fare_search` returns `currency: INR`.
+* **Rules-only routing** of "flight" to `fare_search`: `fare` synonyms; new `route` arg class ("from X to Y" → "X → Y"); numeric
+  `passengers` args are now `count`, not a person name (latent kit bug too).
+* **A sentence accepted as a structured answer**: after "What route should I use?", overheard "Did you watch the match last night?" became the
+  route of a real `hold_fare`. `_arg_from_reply` now only takes raw text for route/place/date/time/count/id/code slots if it is ≤ 4 words and not a question.
+* Desktop follow-ups carry origin/destination/passengers ("Hold the Saturday fare" after the Goa question → Chandigarh → Goa, 2 passengers, ₹10,000).
+  A mic turn that changes nothing the answer depends on no longer repeats the whole answer (except "back to"/"again"/"repeat").
+* **Harness early-delivery race on tool calls** (trail_11 88, st_06 80 in one model run): the kit can deliver an event ~2 ms before its
+  timestamp; speech already had a 22 ms hold, tool calls did not. `Runtime._out` now holds tool_call/cancel_tool issued in the first 22 ms of a
+  turn (harness only, order preserved). Trail suite pytest gets the same single timing retry as the stress suite.
+* Verified after all of it: pytest **127 passed**; all 47 scenarios **100** with models at scale 1; official `eval_submission.py --reps 3`
+  **weighted 100.0 (27/27)**; `demo all` every beat correct, errors 0.
 
 Left, needing a person or a decision:
 * Install the Chrome extension by hand (Load unpacked) and rehearse the demo; record backup videos.
@@ -294,3 +318,4 @@ Earlier notes:
 - Upgraded Ollama 0.21.2 → 0.34.4 (winget); pulled `gemma4:e4b-it-qat` (watchdog restarted stalled pulls); restarted Ollama because the server had started mid-install without CUDA (was 100% CPU, vision timed out); added `think: false` to Ollama requests; vision prompt now asks for the component in sharpest focus / most prominent and to read its label (Gemma 4 otherwise named the geometrically central USB port), and its example no longer says 'HDMI port'. Official evaluator with Gemma 4 (scale 1, 3 reps): weighted 100.0, 27/27. Deleted `gemma3:4b`.
 - Full live verification round (see §9): GPU placement check + warning in `ollama.py`, `/status` endpoint in the bridge; eval stale-leak metric no longer flags values still present in the final slots (false positives on trail_04/st_18); Chrome extension forwards `speak_end` to toasts; CodeMentor dedupes delivered findings by rule + content hash (VS Code live test showed repeats, and a line-number key shifted on insert); `speech.py` uses the same domain ASR prompt as the kit path (first utterance was misheard). Electron installed and launched. All 47 scenarios 100 with models; pytest 105 passed.
 - `trail eval`/`ablate` default time scale is now 1 when models are active (a default-4 run showed pub_07 at 47.7 purely from the compressed clock; public set 100.0 at scale 1).
+- Second live round: mic room-noise/hallucination/echo hardening + `--wake`; runtime ignores overheard mic speech, fallback cooldown, no identical re-answers on mic turns; list-result formatting (names, prices, cheapest, passenger totals); `fare` synonyms, `route` arg class, numeric passengers = count; structured-slot reply validation; desktop context carry-over; harness 22 ms hold for early tool calls. New tests `tests/test_speech.py`, `tests/test_desktop_voice.py`. pytest 127 passed; 47/47 at 100 with models; official weighted 100.0; demo all correct.

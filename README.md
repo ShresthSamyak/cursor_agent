@@ -37,6 +37,7 @@ $env:PYTHONIOENCODING="utf-8"
 .venv\Scripts\python -m trail demo all      # scripted Acts 1-3 through the real runtime
 .venv\Scripts\python -m trail bridge --dev  # ws://127.0.0.1:8765/ws + /demo/flights, /demo/budget, /overlay/
 .venv\Scripts\python -m trail speech        # microphone: VAD barge-in, streaming STT, TTS
+.venv\Scripts\python -m trail speech --wake # noisy room / video playing: only "Trail, ..." requests and follow-ups count
 ```
 Models are optional (rules-only works): faster-whisper for audio, Ollama `gemma4:e4b-it-qat` (Gemma 4 E4B, 4-bit) for vision,
 `SECRET_GEMINI_API_KEY` / `SECRET_OPENROUTER_API_KEY` for cloud. See HANDOFF.md §3.
