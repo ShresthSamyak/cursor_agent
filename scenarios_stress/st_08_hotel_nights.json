@@ -1,0 +1,105 @@
+{
+  "scenario_id": "st_08_hotel_nights",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Unseen tool with a number arg",
+    "suite": "stress",
+    "covers": [
+      "unseen_tool"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find me a hotel ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 900,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "in Chicago for three nights.",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "hotel",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "hotel_search",
+        "args_subset": {
+          "city": [
+            "chicago"
+          ],
+          "nights": [
+            3
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "not_flight",
+        "type": "tool_not_called",
+        "weight": 0.15,
+        "tool": "flight_search"
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.35,
+        "any_of": [
+          "harbor inn",
+          "ht-0001",
+          "189"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  },
+  "tool_manifest": {
+    "hotel_search": {
+      "kind": "read_only",
+      "delay_range_ms": [
+        1200,
+        2400
+      ],
+      "description": "Search hotels in a city.",
+      "args": {
+        "city": {
+          "type": "string",
+          "required": true,
+          "description": "City name."
+        },
+        "nights": {
+          "type": "number",
+          "required": false,
+          "description": "Length of stay."
+        }
+      },
+      "default_result": {
+        "hotels": [
+          {
+            "hotel_id": "HT-0001",
+            "name": "Harbor Inn",
+            "price_usd": 189
+          }
+        ]
+      }
+    }
+  }
+}

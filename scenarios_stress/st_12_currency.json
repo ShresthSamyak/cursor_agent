@@ -1,0 +1,103 @@
+{
+  "scenario_id": "st_12_currency",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Unseen tool with number + two enums",
+    "suite": "stress",
+    "covers": [
+      "unseen_tool",
+      "enum"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Convert 100 dollars to euros.",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "convert",
+        "type": "tool_called",
+        "weight": 0.6,
+        "tool": "currency_convert",
+        "args_subset": {
+          "amount": [
+            100
+          ],
+          "from_currency": [
+            "usd"
+          ],
+          "to_currency": [
+            "eur"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.4,
+        "any_of": [
+          "92.4",
+          "92"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  },
+  "tool_manifest": {
+    "currency_convert": {
+      "kind": "read_only",
+      "delay_range_ms": [
+        500,
+        1100
+      ],
+      "description": "Convert an amount between currencies.",
+      "args": {
+        "amount": {
+          "type": "number",
+          "required": true
+        },
+        "from_currency": {
+          "type": "string",
+          "required": true,
+          "enum": [
+            "USD",
+            "EUR",
+            "INR",
+            "GBP"
+          ]
+        },
+        "to_currency": {
+          "type": "string",
+          "required": true,
+          "enum": [
+            "USD",
+            "EUR",
+            "INR",
+            "GBP"
+          ]
+        }
+      },
+      "default_result": {
+        "converted": 92.4,
+        "rate": 0.924
+      }
+    }
+  }
+}

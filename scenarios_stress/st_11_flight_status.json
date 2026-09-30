@@ -1,0 +1,86 @@
+{
+  "scenario_id": "st_11_flight_status",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L2",
+    "description": "Unseen read-only tool overlapping the flight domain",
+    "suite": "stress",
+    "covers": [
+      "unseen_tool"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Is flight UA 212 on time?",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "status",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_status",
+        "args_subset": {
+          "flight_number": [
+            "ua 212",
+            "ua212"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "not_search",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "flight_search"
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "delayed",
+          "35",
+          "b12"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  },
+  "tool_manifest": {
+    "flight_status": {
+      "kind": "read_only",
+      "delay_range_ms": [
+        700,
+        1400
+      ],
+      "description": "Live status (on time or delayed) of a flight by flight number.",
+      "args": {
+        "flight_number": {
+          "type": "string",
+          "required": true,
+          "description": "Flight number such as UA 212."
+        }
+      },
+      "default_result": {
+        "status_detail": "delayed",
+        "delay_min": 35,
+        "gate": "B12"
+      }
+    }
+  }
+}

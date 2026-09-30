@@ -1,0 +1,68 @@
+{
+  "scenario_id": "st_04_head_to",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L1",
+    "description": "paraphrase: head to",
+    "suite": "stress",
+    "covers": [
+      "paraphrase"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "I'm trying to head to Seattle, what are my options?",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "seattle",
+            "sea"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "seattle",
+          "sea",
+          "fl-sea"
+        ]
+      },
+      {
+        "id": "state",
+        "type": "state_snapshot",
+        "weight": 0.2,
+        "path": "slots.destination",
+        "any_of": [
+          "seattle",
+          "sea"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

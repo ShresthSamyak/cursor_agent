@@ -1,0 +1,71 @@
+{
+  "scenario_id": "st_03_whats_flying",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L1",
+    "description": "paraphrase: what's flying",
+    "suite": "stress",
+    "covers": [
+      "paraphrase"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "What's flying out to Austin next Friday?",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "austin",
+            "aus"
+          ],
+          "date": [
+            "next friday"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "austin",
+          "aus",
+          "fl-aus"
+        ]
+      },
+      {
+        "id": "state",
+        "type": "state_snapshot",
+        "weight": 0.2,
+        "path": "slots.destination",
+        "any_of": [
+          "austin",
+          "aus"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

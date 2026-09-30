@@ -1,0 +1,98 @@
+{
+  "scenario_id": "st_06_interrupt_just_before_return",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Correction lands ~120 ms before the stale search returns",
+    "suite": "stress",
+    "covers": [
+      "correction",
+      "race"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Search flights to Chicago.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 2484,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Sorry, I meant Denver."
+      },
+      "_interrupt": "correction"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "denver",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "denver"
+          ]
+        },
+        "after_ms": 2484.3725565075874,
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "denver"
+        ]
+      },
+      {
+        "id": "no_chicago_final",
+        "type": "spoken_not_contains",
+        "weight": 0.2,
+        "any_of": [
+          "fl-chi"
+        ],
+        "after_ms": 2484.3725565075874
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 2484.3725565075874,
+      "invalidated_calls": [
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "chicago"
+            ]
+          },
+          "invalid_after_ms": 2484.3725565075874
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.destination": [
+          "denver"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

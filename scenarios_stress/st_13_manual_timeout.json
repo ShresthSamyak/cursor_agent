@@ -1,0 +1,68 @@
+{
+  "scenario_id": "st_13_manual_timeout",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Read-only manual lookup times out once",
+    "suite": "stress",
+    "covers": [
+      "failure"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "My QN90 LED keeps blinking red, what does that mean?",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "retried",
+        "type": "tool_called",
+        "weight": 0.4,
+        "tool": "lookup_manual",
+        "min_count": 2
+      },
+      {
+        "id": "ok",
+        "type": "tool_called",
+        "weight": 0.3,
+        "tool": "lookup_manual",
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "led",
+          "page"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  },
+  "tool_overrides": {
+    "lookup_manual": [
+      {
+        "call_index": 0,
+        "delay_ms": 1800,
+        "error": "timeout",
+        "detail": "manual index timed out"
+      }
+    ]
+  }
+}

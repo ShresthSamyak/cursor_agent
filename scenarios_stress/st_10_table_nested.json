@@ -1,0 +1,101 @@
+{
+  "scenario_id": "st_10_table_nested",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Unseen state-modifying tool with a nested object",
+    "suite": "stress",
+    "covers": [
+      "unseen_tool",
+      "nested"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Reserve a table at Luigi's for four people under the name Priya.",
+        "end_of_turn": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "reserve",
+        "type": "tool_called",
+        "weight": 0.6,
+        "tool": "reserve_table",
+        "args_subset": {
+          "restaurant": [
+            "luigi's",
+            "luigis"
+          ],
+          "party.size": [
+            4
+          ],
+          "party.name": [
+            "priya"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.4,
+        "any_of": [
+          "rs-2044"
+        ]
+      }
+    ],
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  },
+  "tool_manifest": {
+    "reserve_table": {
+      "kind": "state_modifying",
+      "delay_range_ms": [
+        900,
+        1600
+      ],
+      "description": "Reserve a restaurant table.",
+      "args": {
+        "restaurant": {
+          "type": "string",
+          "required": true,
+          "description": "Restaurant name."
+        },
+        "party": {
+          "type": "object",
+          "required": true,
+          "properties": {
+            "size": {
+              "type": "number",
+              "required": true
+            },
+            "name": {
+              "type": "string",
+              "required": true
+            }
+          }
+        },
+        "time": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "default_result": {
+        "reservation_id": "RS-2044"
+      }
+    }
+  }
+}

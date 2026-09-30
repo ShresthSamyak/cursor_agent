@@ -1,0 +1,96 @@
+{
+  "scenario_id": "st_07_retract_during_booking",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Retraction while the booking is in flight",
+    "suite": "stress",
+    "covers": [
+      "cancel",
+      "chained"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 300,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Book the 8 AM flight to Chicago for Dev.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 2819,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Actually, never mind, don't book it."
+      },
+      "_interrupt": "cancel"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "search",
+        "type": "tool_called",
+        "weight": 0.3,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "chicago"
+          ]
+        },
+        "must_complete": true
+      },
+      {
+        "id": "no_rebook",
+        "type": "tool_not_called",
+        "weight": 0.3,
+        "tool": "book_flight",
+        "after_ms": 2819.024818148464
+      },
+      {
+        "id": "no_claim",
+        "type": "spoken_not_contains",
+        "weight": 0.4,
+        "any_of": [
+          "bk-",
+          "is booked"
+        ]
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 2819.024818148464,
+      "invalidated_calls": [
+        {
+          "tool": "book_flight",
+          "args_subset": {
+            "passenger_name": [
+              "dev"
+            ]
+          },
+          "invalid_after_ms": 2819.024818148464
+        }
+      ],
+      "required_state_after_interrupt": {
+        "intent": [
+          "none"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 0,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}

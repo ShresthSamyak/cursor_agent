@@ -1,0 +1,132 @@
+{
+  "scenario_id": "st_05_double_correction",
+  "metadata": {
+    "modality": "text",
+    "difficulty": "L3",
+    "description": "Two corrections in one scenario",
+    "suite": "stress",
+    "covers": [
+      "correction",
+      "double"
+    ]
+  },
+  "events": [
+    {
+      "timestamp_ms": 100,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find flights to ",
+        "end_of_turn": false
+      }
+    },
+    {
+      "timestamp_ms": 800,
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Boston please.",
+        "end_of_turn": true
+      }
+    },
+    {
+      "timestamp_ms": 1400,
+      "event_type": "interruption",
+      "payload": {
+        "text": "Actually, Miami."
+      },
+      "_interrupt": "correction"
+    },
+    {
+      "timestamp_ms": 2100,
+      "event_type": "interruption",
+      "payload": {
+        "text": "No wait, make it Seattle."
+      },
+      "_interrupt": "correction"
+    }
+  ],
+  "ground_truth": {
+    "checkpoints": [
+      {
+        "id": "seattle",
+        "type": "tool_called",
+        "weight": 0.5,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "seattle"
+          ]
+        },
+        "after_ms": 2100,
+        "must_complete": true
+      },
+      {
+        "id": "final",
+        "type": "final_response_contains",
+        "weight": 0.3,
+        "any_of": [
+          "seattle"
+        ],
+        "after_ms": 2100
+      },
+      {
+        "id": "no_miami_after",
+        "type": "tool_not_called",
+        "weight": 0.2,
+        "tool": "flight_search",
+        "args_subset": {
+          "destination": [
+            "miami"
+          ]
+        },
+        "after_ms": 2100
+      }
+    ],
+    "recovery": {
+      "interrupt_at_ms": 1400,
+      "invalidated_calls": [
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "boston"
+            ]
+          },
+          "invalid_after_ms": 1400
+        },
+        {
+          "tool": "flight_search",
+          "args_subset": {
+            "destination": [
+              "miami"
+            ]
+          },
+          "invalid_after_ms": 2100
+        }
+      ],
+      "required_state_after_interrupt": {
+        "slots.destination": [
+          "seattle"
+        ]
+      }
+    },
+    "latency": {
+      "respond_to": [
+        {
+          "event_index": 1,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 2,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        },
+        {
+          "event_index": 3,
+          "full_credit_ms": 800,
+          "zero_credit_ms": 2500
+        }
+      ]
+    }
+  }
+}
