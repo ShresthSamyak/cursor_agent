@@ -31,6 +31,9 @@ def main() -> None:
     sp = sub.add_parser("speech", help="microphone -> VAD barge-in + streaming STT -> bridge; TTS for answers")
     sp.add_argument("--token", default=None)
     sp.add_argument("--port", type=int, default=8765)
+    ua = sub.add_parser("uia", help="Windows UI Automation reader (Excel, PDF, native apps) -> bridge")
+    ua.add_argument("--token", default=None)
+    ua.add_argument("--port", type=int, default=8765)
     dm = sub.add_parser("demo", help="scripted replay of a demo act (no perception needed)")
     dm.add_argument("act", choices=["act1", "act2", "act3", "heckler", "all"])
     dm.add_argument("--speed", type=float, default=1.0)
@@ -63,6 +66,11 @@ def main() -> None:
         from .desktop.speech import main as speech_main
 
         speech_main(token=args.token, port=args.port)
+        return
+    if args.command == "uia":
+        from .desktop.uia import main as uia_main
+
+        uia_main(token=args.token, port=args.port)
         return
     if args.command == "demo":
         from .desktop.demo import main as demo_main

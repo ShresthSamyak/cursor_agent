@@ -1,1 +1,5 @@
 == 1 naive restart
+   public 79.0  trail 60.7  revised-answer p50 176.0  false stops 3  dup writes 0
+== 2 +checkpoints/goals
+   public 84.3  trail 95.4  revised-answer p50 4318.0  false stops 4  dup writes 0
+== 3 +classifier
