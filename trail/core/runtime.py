@@ -630,7 +630,10 @@ class Runtime:
         if intent in DEVICE_INTENTS and not (set(self.manifest.tools) & {"lookup_manual", "create_support_ticket"}) and self.manifest:
             intent = None
         ranked = self.manifest.rank(parse) if self.manifest else []
-        if ranked and ranked[0][0] >= 3.0 and intent not in {"capabilities", "thanks"}:
+        from .tools import fillable
+        if ranked and ranked[0][0] < 3.0 and ranked[0][0] >= 2.0 and not fillable(self.manifest.tools[ranked[0][1]], parse):
+            ranked = []
+        if ranked and ranked[0][0] >= 2.0 and intent not in {"capabilities", "thanks"}:
             scores = dict((n, s) for s, n in ranked)
             name, best = ranked[0][1], ranked[0][0]
             known = KNOWN_TOOL_INTENTS.get(name)

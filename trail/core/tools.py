@@ -28,7 +28,7 @@ _SYNONYMS: dict[str, set[str]] = {
     "currency": {"currency", "exchange", "convert", "rate", "dollar", "euro", "rupee"},
     "baggage": {"baggage", "luggage", "bag", "suitcase", "carry"},
     "seat": {"seat", "aisle", "window", "legroom"},
-    "status": {"status", "delay", "delayed", "late", "on-time", "arrival", "departure"},
+    "status": {"status", "delay", "delayed", "late", "on-time", "on time", "arrival", "departure", "gate", "landed"},
     "train": {"train", "rail", "railway"},
     "ticket": {"ticket", "case", "complaint", "report"},
     "manual": {"manual", "guide", "instruction", "documentation", "port", "how"},
@@ -63,6 +63,11 @@ _ENUM_SYNONYMS = {
     "aisle": {"aisle"},
     "business": {"business"},
     "first": {"first class"},
+    "usd": {"usd", "dollar", "dollars", "bucks", "$"},
+    "eur": {"eur", "euro", "euros", "€"},
+    "inr": {"inr", "rupee", "rupees", "rs", "₹"},
+    "gbp": {"gbp", "pound", "pounds", "sterling", "£"},
+    "jpy": {"jpy", "yen"},
 }
 
 
@@ -219,7 +224,8 @@ class Manifest:
                 if w in words or w in raw_words:
                     score += 3.0
                 syn = _SYNONYMS.get(w)
-                if syn and (syn & raw_words or {stem(s) for s in syn} & words):
+                if syn and (syn & raw_words or {stem(s) for s in syn} & words
+                            or any(" " in s and s in parse.text.lower() for s in syn)):
                     score += 2.0
             desc = set(content_words(spec.description)) - {stem(v) for v in _GENERIC_VERBS}
             score += 0.75 * len(desc & words)
@@ -233,8 +239,19 @@ class Manifest:
         return scored
 
 
+def fillable(spec: ToolSpec, parse: Parse) -> bool:
+    return all(_can_fill(a, parse) for a in spec.required)
+
+
 def _can_fill(arg: ArgSpec, parse: Parse) -> bool:
+    if arg.enum:
+        return (_positional_enum(arg, parse.text) if re.match(r"(?:from|source|src|to|target|dest|into)(?:_|$)", arg.name.lower())
+                else enum_from_text(arg, parse.text)) is not None
     cls = arg_class(arg)
+    if cls == "code":
+        return bool(_CODE_RE.search(parse.text))
+    if cls == "text":
+        return bool(_proper_noun(parse.text))
     if cls in {"place", "origin", "destination"}:
         return bool(parse.places)
     if cls == "date":
@@ -280,6 +297,8 @@ def arg_class(arg: ArgSpec) -> str:
         return "query"
     if re.search(r"summary|description|issue|problem|reason|note|details|complaint", n):
         return "summary"
+    if arg.type == "string" and re.search(r"(?:^|_)(?:number|code|no|num)$|flight_?no|tracking|confirmation|pnr|record_locator", n):
+        return "code"
     if arg.type in {"number", "integer"} or re.search(r"nights|count|number|num_|quantity|qty|guests|passengers|rooms|days|adults|children|amount|size", n):
         return "count"
     if arg.type == "boolean":
@@ -334,6 +353,13 @@ def _value_for(arg: ArgSpec, ctx: ArgContext, spec: ToolSpec) -> Any:
         return _coerce(arg, slots[arg.name])
     cls = arg_class(arg)
     text = ctx.text
+    if arg.enum and re.match(r"(?:from|source|src|to|target|dest|into)(?:_|$)", arg.name.lower()):
+        return _positional_enum(arg, text)
+    if cls == "code":
+        m = _CODE_RE.search(text)
+        return f"{m[1].upper()} {m[2]}" if m else None
+    if cls == "text" and arg.type == "string" and arg.required and not arg.enum:
+        return _proper_noun(text)
     if arg.enum and cls not in {"model", "severity"}:
         hit = enum_from_text(arg, text)
         if hit is not None:
@@ -395,6 +421,48 @@ def _value_for(arg: ArgSpec, ctx: ArgContext, spec: ToolSpec) -> Any:
     if arg.required and arg.type == "string":
         return None
     return None
+
+
+_CODE_RE = re.compile(r"\b([A-Z]{1,3})\s?-?(\d{1,5})\b")
+_PROPER_RE = re.compile(r"\b(?:at|called|named|from|with)\s+((?:[A-Z][\w'’&.-]*)(?:\s+(?:[A-Z][\w'’&.-]*|of|the|&)){0,3})")
+
+
+def _proper_noun(text: str) -> str | None:
+    """A named thing the schema needs but no class covers ("a table at Luigi's")."""
+    q = re.search(r"[\"“]([^\"”]{2,60})[\"”]", text)
+    if q:
+        return q[1].strip()
+    for m in _PROPER_RE.finditer(text):
+        name = m[1].strip(" .,")
+        if not ent.canonical_city(name) and name.split()[0].lower() not in {"the", "a", "my"} and \
+                not ent.find_dates(name):
+            return name
+    return None
+
+
+def _positional_enum(arg: ArgSpec, text: str) -> Any:
+    """from_x / to_x enums: the value after "from"/"to", else by order of mention."""
+    low = text.lower()
+    hits: list[tuple[int, Any]] = []
+    for value in arg.enum:
+        names = {str(value).lower()} | _ENUM_SYNONYMS.get(str(value).lower(), set())
+        for s in names:
+            for m in re.finditer(rf"(?<![a-z]){re.escape(s)}(?![a-z])", low):
+                hits.append((m.start(), value))
+    if not hits:
+        return None
+    hits.sort()
+    want_to = re.match(r"(?:to|target|dest|into)", arg.name.lower()) is not None
+    for pos, value in hits:
+        before = low[max(0, pos - 8):pos]
+        if want_to and re.search(r"\b(?:to|into|in)\s+$", before):
+            return value
+        if not want_to and re.search(r"\bfrom\s+$", before):
+            return value
+    ordered = list(dict.fromkeys(v for _, v in hits))
+    if want_to:
+        return ordered[-1] if len(ordered) > 1 else None
+    return ordered[0]
 
 
 def _compatible(arg: ArgSpec, value: Any) -> bool:

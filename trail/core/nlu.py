@@ -74,7 +74,7 @@ _CAPABILITY_RE = re.compile(
 _THANKS_RE = re.compile(r"\b(?:thanks|thank you|cheers|appreciate it)\b", re.I)
 _DEICTIC_RE = re.compile(r"\b(?:this|that|these|those|here|it)\b(?:\s+(?:one|port|button|light|thing|cable|part|icon|page|cell|item))?", re.I)
 
-_BOOK_RE = re.compile(r"\b(?:book|booking|reserve|reservation|buy|purchase|get me (?:a )?(?:seat|ticket)|hold (?:a|the) seat)\b", re.I)
+_BOOK_RE = re.compile(r"\b(?:book|booking|reserve|reservation|buy|purchase|get me (?:a )?(?:seat|ticket)|get me on|put me on|sign me up for|hold (?:a|the) seat)\b", re.I)
 _FLIGHT_RE = re.compile(
     r"\b(?:flights?|fly|flying|plane|airline|airfare|fares?|nonstop|red-?eye|departures?|"
     r"(?:seats?|tickets?|trip|getaway) (?:to|from)|get (?:me )?to|head(?:ing)? to|travel(?:l?ing)? to|go(?:ing)? to)\b", re.I)
@@ -428,6 +428,9 @@ def issue_summary(text: str, device: str | None) -> str | None:
 
 def severity(text: str) -> str:
     low = text.lower()
+    m = re.search(r"\b(high|low|medium)[- ](?:priority|severity|urgency)\b|\b(?:priority|severity)\s+(?:is\s+|of\s+)?(high|low|medium)\b", low)
+    if m:
+        return m[1] or m[2]
     if re.search(r"\b(?:urgent|emergency|asap|critical|fire|smoke|sparks?|dangerous|burning|shock|flood(?:ing)?|leaking)\b", low):
         return "high"
     if re.search(r"\b(?:won'?t (?:turn on|power|start)|dead|completely|not working at all|broken)\b", low):
