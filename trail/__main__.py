@@ -32,6 +32,7 @@ def main() -> None:
     sp = sub.add_parser("speech", help="microphone -> VAD barge-in + streaming STT -> bridge; TTS for answers")
     sp.add_argument("--token", default=None)
     sp.add_argument("--port", type=int, default=8765)
+    sp.add_argument("--wake", action="store_true", help="noisy room: only 'Trail, ...' requests (and follow-ups) count")
     ua = sub.add_parser("uia", help="Windows UI Automation reader (Excel, PDF, native apps) -> bridge")
     ua.add_argument("--token", default=None)
     ua.add_argument("--port", type=int, default=8765)
@@ -70,7 +71,7 @@ def main() -> None:
     if args.command == "speech":
         from .desktop.speech import main as speech_main
 
-        speech_main(token=args.token, port=args.port)
+        speech_main(token=args.token, port=args.port, wake=args.wake)
         return
     if args.command == "uia":
         from .desktop.uia import main as uia_main

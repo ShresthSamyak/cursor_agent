@@ -403,8 +403,69 @@ def _label(key: str) -> str:
     return k.replace("_", " ").strip()
 
 
+_NAME_KEYS = ("name", "title", "label", "day", "date")
+_PRICE_KEY = re.compile(r"price|fare|cost|amount|total|fee|rate", re.I)
+
+
+def _is_id(key: str) -> bool:
+    return key.endswith("_id") or key == "id"
+
+
+def _item_price(it: dict[str, Any]) -> tuple[str, float] | None:
+    return next(((kk, float(x)) for kk, x in it.items()
+                 if isinstance(x, (int, float)) and not isinstance(x, bool) and _PRICE_KEY.search(kk)), None)
+
+
+def _money(key: str, value: float, currency: Any) -> str:
+    if isinstance(currency, str) and len(currency) == 3 and not any(key.lower().endswith(s) for s in _UNIT_SUFFIX):
+        return ent.format_price(value, currency.upper())
+    return _fmt_value(key, value)
+
+
+def _item_text(it: dict[str, Any], currency: Any) -> str:
+    """One list item for speech: its human name, and its price if it has one (never a count like stops: 0)."""
+    cur = it.get("currency") or currency
+    name = next((it[kk] for kk in _NAME_KEYS if isinstance(it.get(kk), str) and it[kk]), None)
+    ident = next((x for kk, x in it.items() if _is_id(kk)), None)
+    if name is None:
+        name = next((x for kk, x in it.items() if isinstance(x, str) and x and not _is_id(kk) and len(x) <= 40), None)
+    d = str(name) if name is not None else str(ident or "")
+    if name is not None and ident and ident != name and it.get("name"):
+        d += f" ({ident})"
+    price = _item_price(it)
+    if price:
+        d += f" at {_money(price[0], price[1], cur)}"
+    else:
+        extra = [_fmt_value(kk, x) for kk, x in it.items()
+                 if isinstance(x, (int, float)) and not isinstance(x, bool) and not _is_id(kk)]
+        if extra:
+            d += f" ({extra[0]})"
+    return d.strip()
+
+
+def _price_notes(items: list[dict[str, Any]], goal: Goal, currency: Any) -> list[str]:
+    """The cheapest option, and the total when the user said how many people (prices are per person)."""
+    priced = [(it, p) for it in items if (p := _item_price(it))]
+    if not priced:
+        return []
+    notes = []
+    best, (key, amount) = min(priced, key=lambda t: t[1][1])
+    cur = best.get("currency") or currency
+    if len(priced) > 1:
+        notes.append(f"cheapest is {_item_text(best, currency)}")
+    try:
+        pax = int(goal.slots.get("passengers") or 1)
+    except (TypeError, ValueError):
+        pax = 1
+    if pax > 1:
+        total = _money(key, amount * pax, cur)
+        notes.append(f"for {pax} passengers the cheapest comes to {total}" if len(priced) > 1
+                     else f"for {pax} passengers that's {total}")
+    return notes
+
+
 def describe_result(spec: ToolSpec | None, goal: Goal, result: dict[str, Any]) -> str:
-    fields = {k: v for k, v in result.items() if k not in {"status"} and v not in (None, "", [], {})}
+    fields = {k: v for k, v in result.items() if k not in {"status", "currency"} and v not in (None, "", [], {})}
     prose = [v for k, v in fields.items() if k in {"answer", "text", "summary", "message", "reply", "detail"}
              and isinstance(v, str) and len(v.split()) >= 5]
     if prose:
@@ -422,23 +483,13 @@ def describe_result(spec: ToolSpec | None, goal: Goal, result: dict[str, Any]) -
     parts: list[str] = []
     for k, v in fields.items():
         if isinstance(v, list):
-            items = [i for i in v if isinstance(i, dict)][:3]
+            all_items = [i for i in v if isinstance(i, dict)]
+            items = all_items[:3]
             if items:
-                descs = []
-                for it in items:
-                    name = it.get("name") or it.get("title") or next((x for kk, x in it.items() if kk.endswith("_id") or kk == "id"), None)
-                    extra = [
-                        _fmt_value(kk, x) for kk, x in it.items()
-                        if isinstance(x, (int, float)) and not isinstance(x, bool) and kk not in {"id"}
-                    ]
-                    ident = next((x for kk, x in it.items() if (kk.endswith("_id") or kk == "id") and x != name), None)
-                    d = str(name) if name else ""
-                    if ident:
-                        d += f" ({ident})"
-                    if extra:
-                        d += f" at {extra[0]}"
-                    descs.append(d.strip())
+                cur = result.get("currency")
+                descs = [_item_text(it, cur) for it in items]
                 parts.append(f"{_label(k)}: {_join(descs)}")
+                parts.extend(_price_notes(all_items, goal, cur))
             elif v:
                 parts.append(f"{_label(k)}: {_join([str(x) for x in v[:5]])}")
         elif isinstance(v, dict):

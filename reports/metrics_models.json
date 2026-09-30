@@ -70,7 +70,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          38.0
+          22.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -290,9 +290,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 464.9,
-          "p50": 464.9,
-          "mean": 452.9
+          "max": 440.0,
+          "p50": 440.0,
+          "mean": 384.9
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -349,9 +349,9 @@
         },
         "first_response_ms": {
           "n": 1,
-          "max": 199.9,
-          "p50": 199.9,
-          "mean": 199.9
+          "max": 218.1,
+          "p50": 218.1,
+          "mean": 218.1
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -408,9 +408,9 @@
         },
         "first_response_ms": {
           "n": 1,
-          "max": 24.5,
-          "p50": 24.5,
-          "mean": 24.5
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -545,7 +545,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          38.0
+          37.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -588,9 +588,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 0.0,
-          "p50": 0.0,
-          "mean": 0.0
+          "max": 31.9,
+          "p50": 31.9,
+          "mean": 16.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -650,9 +650,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 45.2,
-          "p50": 45.2,
-          "mean": 25.3
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -672,7 +672,7 @@
           34.0
         ],
         "revised_answer_ms": [
-          2503.0
+          2550.0
         ],
         "backchannel_false_stops": 0,
         "stale_output_leaks": 0,
@@ -733,13 +733,13 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          47.0
+          31.0
         ],
         "revised_answer_ms": [
-          2032.0
+          2031.0
         ],
         "backchannel_false_stops": 0,
-        "stale_output_leaks": 1,
+        "stale_output_leaks": 0,
         "duplicate_writes": 0,
         "fillers": 2
       },
@@ -797,10 +797,10 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          50.0
+          35.0
         ],
         "revised_answer_ms": [
-          1285.0
+          1301.0
         ],
         "backchannel_false_stops": 0,
         "stale_output_leaks": 0,
@@ -864,7 +864,7 @@
           52.0
         ],
         "revised_answer_ms": [
-          1365.0
+          1396.0
         ],
         "backchannel_false_stops": 0,
         "stale_output_leaks": 0,
@@ -925,7 +925,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          38.0
+          37.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -987,7 +987,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          47.0
+          46.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -1049,7 +1049,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          40.0
+          25.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -1092,9 +1092,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 37.1,
-          "p50": 37.1,
-          "mean": 18.5
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -1111,7 +1111,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          37.0
+          38.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -1173,7 +1173,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          47.0
+          31.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -1217,9 +1217,9 @@
         },
         "first_response_ms": {
           "n": 3,
-          "max": 31.9,
-          "p50": 5.0,
-          "mean": 12.3
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -1279,9 +1279,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 40.4,
-          "p50": 40.4,
-          "mean": 20.2
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -1339,9 +1339,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 6.0,
-          "p50": 6.0,
-          "mean": 3.0
+          "max": 15.0,
+          "p50": 15.0,
+          "mean": 7.5
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -1598,14 +1598,14 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          47.0,
+          31.0,
           528.0,
           34.0,
           50.0
         ],
         "revised_answer_ms": [
           1828.0,
-          2425.0
+          2440.0
         ],
         "backchannel_false_stops": 0,
         "stale_output_leaks": 0,
@@ -1649,9 +1649,9 @@
         },
         "first_response_ms": {
           "n": 5,
-          "max": 460.5,
-          "p50": 0.0,
-          "mean": 93.6
+          "max": 489.7,
+          "p50": 6.9,
+          "mean": 102.3
         },
         "correction_latency_ms": null,
         "fork_hit_rate": 0.0
@@ -1668,7 +1668,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          47.0
+          46.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -1770,9 +1770,9 @@
         },
         "first_response_ms": {
           "n": 1,
-          "max": 16.2,
-          "p50": 16.2,
-          "mean": 16.2
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -1888,9 +1888,9 @@
         },
         "first_response_ms": {
           "n": 1,
-          "max": 16.2,
-          "p50": 16.2,
-          "mean": 16.2
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -2026,11 +2026,11 @@
       "metrics": {
         "yield_ms": [
           37.0,
-          40.0
+          41.0
         ],
         "revised_answer_ms": [
-          3256.0,
-          2556.0
+          3287.0,
+          2587.0
         ],
         "backchannel_false_stops": 0,
         "stale_output_leaks": 0,
@@ -2072,9 +2072,9 @@
         },
         "first_response_ms": {
           "n": 3,
-          "max": 0.0,
-          "p50": 0.0,
-          "mean": 0.0
+          "max": 23.9,
+          "p50": 11.3,
+          "mean": 14.6
         },
         "correction_latency_ms": null,
         "fork_hit_rate": 0.0
@@ -2094,7 +2094,7 @@
           47.0
         ],
         "revised_answer_ms": [
-          2250.0
+          2282.0
         ],
         "backchannel_false_stops": 0,
         "stale_output_leaks": 0,
@@ -2155,7 +2155,7 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          25.0
+          40.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
@@ -2198,9 +2198,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 0.0,
-          "p50": 0.0,
-          "mean": 0.0
+          "max": 9.0,
+          "p50": 9.0,
+          "mean": 4.5
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -2493,9 +2493,9 @@
         },
         "first_response_ms": {
           "n": 1,
-          "max": 17.1,
-          "p50": 17.1,
-          "mean": 17.1
+          "max": 0.0,
+          "p50": 0.0,
+          "mean": 0.0
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -2807,11 +2807,11 @@
       "median": 100.0,
       "metrics": {
         "yield_ms": [
-          31.0
+          47.0
         ],
         "revised_answer_ms": [],
         "backchannel_false_stops": 0,
-        "stale_output_leaks": 1,
+        "stale_output_leaks": 0,
         "duplicate_writes": 0,
         "fillers": 2
       },
@@ -2850,9 +2850,9 @@
         },
         "first_response_ms": {
           "n": 2,
-          "max": 0.0,
-          "p50": 0.0,
-          "mean": 0.0
+          "max": 12.6,
+          "p50": 12.6,
+          "mean": 6.3
         },
         "correction_latency_ms": null,
         "fork_hit_rate": null
@@ -2864,14 +2864,14 @@
     "public_weighted": 100.0,
     "trail_plain": 100.0,
     "all_plain": 100.0,
-    "time_to_yield_ms_p50": 41.0,
+    "time_to_yield_ms_p50": 38.0,
     "time_to_yield_ms_p95": 52.0,
-    "revised_answer_ms_p50": 2250.0,
+    "revised_answer_ms_p50": 2282.0,
     "corrections": 10,
     "fork_hits": 0,
     "fork_hit_rate": 0.0,
     "backchannel_false_stops": 0,
-    "stale_output_leaks": 2,
+    "stale_output_leaks": 0,
     "stale_output_leaks_runtime": 0,
     "duplicate_writes": 0,
     "stale_results_ignored": 0,

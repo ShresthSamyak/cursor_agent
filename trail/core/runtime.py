@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Awaitable, Callable
@@ -34,6 +35,7 @@ from .trail import TrailStore, make_entry
 
 KNOWN_TOOL_INTENTS = {"flight_search": "flight_search", "book_flight": "book_flight", "cancel_booking": "cancel_booking",
                       "lookup_manual": "device_support", "create_support_ticket": "create_support_ticket"}
+_RESUME_CUE = re.compile(r"\b(?:back to|again|repeat|remind|what was|say that)\b", re.I)
 _RETRYABLE = {"timeout", "unavailable", "rate_limited", "internal_error", "error", "server_error", "busy"}
 _REQUEST_CUE = re.compile(
     r"\?|\b(?:can|could|would|will) you\b|\bplease\b|\bi (?:need|want|would like|'d like)\b|\bhelp\b|\bhow\b|\bwhat\b|"
@@ -183,8 +185,32 @@ class Runtime:
     # ------------------------------------------------------------------ output
     def _out(self, type_: str, **kw: Any) -> None:
         assert self._sink is not None
-        self._sink.put_nowait(Output(type=type_, session_id=self.session_id, version=self.version,
-                                     turn=self.turn_seq, **kw))
+        o = Output(type=type_, session_id=self.session_id, version=self.version, turn=self.turn_seq, **kw)
+        if self._held or (type_ in {"tool_call", "cancel_tool"} and time.perf_counter() < self._hold_until):
+            if time.perf_counter() < self._hold_until:
+                self._held.append(o)          # keeps order: nothing overtakes a held call
+                return
+            self._flush_held()
+        self._sink.put_nowait(o)
+
+    # Harness only: the kit can deliver an event a few ms before its timestamp (host timer granularity),
+    # and an action stamped before the turn it answers does not count. Speech has its own hold in _say;
+    # tool calls and cancels issued in the same window are held for the same 22 ms of real time.
+    _hold_until = 0.0
+    _held: list = []
+
+    def _hold_turn_outputs(self) -> None:
+        if self.config.mode != "harness":
+            return
+        self._held = self._held if self._held else []
+        self._hold_until = time.perf_counter() + 0.022
+        asyncio.get_running_loop().call_later(0.023, self._flush_held)
+
+    def _flush_held(self) -> None:
+        held, self._held = self._held, []
+        for o in held:
+            if self._sink is not None:
+                self._sink.put_nowait(o)
 
     def _snapshot(self) -> dict[str, Any]:
         g = self.focus
@@ -310,6 +336,7 @@ class Runtime:
         finally:
             incoming.cancel()
             proposed.cancel()
+            self._flush_held()
             await self._teardown(incoming, proposed)
 
     async def _teardown(self, *tasks: asyncio.Task) -> None:
@@ -462,7 +489,10 @@ class Runtime:
         self._begin_turn(ev)
         if not text.strip():
             return
-        self._on_utterance(redact(text), barge_in=ev.barge_in)
+        # A live microphone also hears the room: speech that is not a request is not acted on.
+        spoken = self.config.mode == "desktop" and ev.source == "speech"
+        self._turn_overheard_ok = spoken and not _RESUME_CUE.search(text)
+        self._on_utterance(redact(text), barge_in=ev.barge_in, spoken=spoken)
 
     def _begin_turn(self, ev: Event) -> Turn:
         self.turn_seq += 1
@@ -470,6 +500,7 @@ class Runtime:
         self._advance("turn")
         ts = ev.ts if ev.ts is not None and self.config.mode == "harness" else self.clock.now_ms()
         self.turn = Turn(self.turn_seq, ts, ev.barge_in)
+        self._hold_turn_outputs()
         self._yield_now(ev)
         self.user_speaking = False
         return self.turn
@@ -830,6 +861,14 @@ class Runtime:
             g.slots[k] = v
         if domain == "flight" and g.slots.get("flight_id"):
             g.slots["_flight_id_explicit"] = True
+        if self.config.mode == "desktop" and domain == "tool" and \
+                not any(g.slots.get(k) for k in ("origin", "destination", "place", "location")):
+            # "Hold the Saturday fare" right after asking about Chandigarh → Goa means that route.
+            prev = next((x for x in reversed(self.goals.goals) if x.slots.get("destination") or x.slots.get("origin")), None)
+            if prev is not None:
+                for k in ("origin", "destination", "passengers"):
+                    if prev.slots.get(k) and not g.slots.get(k):
+                        g.slots[k] = prev.slots[k]
         if domain == "device":
             model = self._device_model(parse)
             if model:
@@ -899,7 +938,16 @@ class Runtime:
         if "greeting" in parse.acts:
             self._say(FINAL, nlg.capabilities(self.manifest))
             return
+        if self.config.mode == "desktop":
+            now = self.clock.now_ms()
+            if now - self._last_fallback_ms < 20_000:        # don't recite the menu again and again
+                self._audit("ignored", text=parse.text, reason="fallback cooldown")
+                return
+            self._last_fallback_ms = now
         self._say(FINAL, "Sorry, I'm not sure how to help with that. " + nlg.capabilities(self.manifest).replace("Hi! ", ""))
+
+    _last_fallback_ms = -10**9
+    _turn_overheard_ok = False      # mic turn that may be ignored if it changes nothing (not "back to"/"repeat")
 
     def _ambiguous(self, parse: nlu.Parse, tool: str | None, goal: Goal | None, busy: bool, *, shaky=None,
                    spoken: bool = False) -> None:
@@ -1149,12 +1197,17 @@ class Runtime:
         arg = spec.arg(name) if spec else None
         if arg is None:
             return parse.text.strip(" .!?") or None
-        from .tools import ArgContext, _value_for
+        from .tools import ArgContext, _value_for, arg_class
 
         slots = dict(parse.slots)
         v = _value_for(arg, ArgContext(slots=slots, text=parse.text, parse=parse), spec)
         if v is None and arg.type == "string" and not arg.enum:
-            v = parse.text.strip(" .!?") or None
+            raw = parse.text.strip(" .!?")
+            structured = arg_class(arg) in {"route", "place", "origin", "destination", "date", "time", "count", "id", "code"}
+            # A structured slot takes the raw reply only if it looks like an answer ("Springfield"), not a sentence.
+            if structured and (len(raw.split()) > 4 or "?" in parse.text):
+                return None
+            v = raw or None
         return v
 
     # ------------------------------------------------------------------ reconcile
@@ -1445,6 +1498,12 @@ class Runtime:
             return
         answer_key = f"{text}|{sorted(goal.snapshot_slots().items())}"
         if goal.answered_key == answer_key:
+            return
+        if self._turn_overheard_ok and question is None and failed is None and text == goal.answer:
+            # A turn that changed nothing the answer depends on (often overheard speech): don't say it all again.
+            goal.answered_key = answer_key
+            goal.status = DONE
+            self._audit("ignored", reason="identical answer", text=text[:80])
             return
         parked = [g for g in self.goals.parked() if g is not goal]
         if question is None and parked and not goal.offered_back and goal.status == ACTIVE:

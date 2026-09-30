@@ -24,6 +24,7 @@ _SYNONYMS: dict[str, set[str]] = {
     "car": {"car", "rental", "rent", "vehicle", "suv", "drive", "sedan"},
     "rental": {"rental", "rent", "hire"},
     "flight": {"flight", "fly", "plane", "airline", "seat", "ticket"},
+    "fare": {"fare", "fares", "flight", "flights", "ticket", "tickets", "cheapest", "price", "prices"},
     "restaurant": {"restaurant", "dinner", "lunch", "eat", "food", "table", "reservation"},
     "currency": {"currency", "exchange", "convert", "rate", "dollar", "euro", "rupee"},
     "baggage": {"baggage", "luggage", "bag", "suitcase", "carry"},
@@ -252,7 +253,7 @@ def _can_fill(arg: ArgSpec, parse: Parse) -> bool:
         return bool(_CODE_RE.search(parse.text))
     if cls == "text":
         return bool(_proper_noun(parse.text))
-    if cls in {"place", "origin", "destination"}:
+    if cls in {"place", "origin", "destination", "route"}:
         return bool(parse.places)
     if cls == "date":
         return bool(parse.dates)
@@ -278,6 +279,8 @@ def arg_class(arg: ArgSpec) -> str:
         return "origin"
     if re.search(r"(?:^|_)(?:destination|dest|to_city|arrival_city)(?:_|$)", n):
         return "destination"
+    if re.search(r"(?:^|_)(?:route|itinerary|sector|journey)(?:_|$)", n) and arg.type == "string":
+        return "route"
     if re.search(r"city|location|place|town|airport|where|region|country|pickup|dropoff|address|area", n) or \
             (arg.type == "string" and re.search(r"\bcity\b|\blocation\b|\bairport\b", d) and "name" not in n):
         return "place"
@@ -287,7 +290,8 @@ def arg_class(arg: ArgSpec) -> str:
         return "time"
     if n.endswith("_id") or n == "id":
         return "id"
-    if re.search(r"passenger|guest_name|customer|traveller|traveler|full_name|contact_name|^name$|person|attendee", n):
+    if re.search(r"passenger|guest_name|customer|traveller|traveler|full_name|contact_name|^name$|person|attendee", n) \
+            and arg.type not in {"number", "integer"}:
         return "person"
     if re.search(r"severity|priority|urgency", n):
         return "severity"
@@ -378,6 +382,12 @@ def _value_for(arg: ArgSpec, ctx: ArgContext, spec: ToolSpec) -> Any:
                 continue
             obj[prop.name] = v
         return obj or None
+    if cls == "route":
+        # "from Chandigarh to Goa" -> "Chandigarh → Goa" (the arrow if the tool's own example uses one).
+        o = slots.get("origin")
+        d = slots.get("destination") or slots.get("place") or slots.get("location")
+        sep = " → " if "→" in arg.description else " to "
+        return f"{o}{sep}{d}" if o and d else (d or o)
     if cls == "origin":
         return slots.get("origin")
     if cls == "destination":

@@ -96,7 +96,7 @@ class DesktopTools:
             fares = r["fares"] if r else []
             if args.get("day"):
                 fares = [f for f in fares if f["day"].lower().startswith(str(args["day"]).lower()[:3])]
-            return {"status": "success", "fares": fares}
+            return {"status": "success", "currency": "INR", "fares": fares}
         if api == "hold_fare":
             f = self._fare(str(args.get("route", "")), str(args.get("day", "")))
             if f is None:

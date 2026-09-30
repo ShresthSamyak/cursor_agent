@@ -18,5 +18,4 @@ STAGE 3 — scored evaluation (reps=3, time_scale=1.0, wall_cap=120.0s, setup_ca
   plain average : 100.0
   by modality   : text=100.0  audio=100.0  visual=100.0
   WEIGHTED SCORE: 100.0   (audio/visual x1.5, L3/L4 x1.25)
-  wrote reports/eval_submission_scale1.json
 ==============================================================

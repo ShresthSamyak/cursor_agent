@@ -1,17 +1,17 @@
 # metrics_models
 
-Generated 2026-09-30 09:20; time scale 1.0, reps 1, models: TRAIL_LLM=auto, TRAIL_STT=whisper.
+Generated 2026-09-30 18:22; time scale 1.0, reps 1, models: TRAIL_LLM=auto, TRAIL_STT=whisper.
 
 | Metric | Value | Target (PDF p. 17) |
 | --- | --- | --- |
 | Public set, plain average | 100.0 | clearly above ~52 |
 | Public set, weighted (a/v x1.5, L3/L4 x1.25) | 100.0 | |
 | Trail suite, plain average | 100.0 | |
-| Time to yield p50 / p95 (virtual ms) | 41.0 / 52.0 | < 150 ms |
-| Correction to revised answer p50 (virtual ms) | 2250.0 | < 300 ms on a fork hit |
+| Time to yield p50 / p95 (virtual ms) | 38.0 / 52.0 | < 150 ms |
+| Correction to revised answer p50 (virtual ms) | 2282.0 | < 300 ms on a fork hit |
 | Fork hit rate | 0.0 (0/10) | report it |
 | Backchannel false stops | 0 | 0 |
-| Stale-output leaks (trace / runtime) | 2 / 0 | 0 |
+| Stale-output leaks (trace / runtime) | 0 / 0 | 0 |
 | Duplicate writes | 0 | 0 |
 | Stale results ignored / calls cancelled / compensations | 0 / 16 / 1 | |
 | Runtime errors | 0 | 0 |
