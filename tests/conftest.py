@@ -20,7 +20,7 @@ def load(path: str | Path) -> dict:
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
 
 
-def run_kit(scenario: dict, agent_cls=None, *, time_scale: float = 8.0):
+def run_kit(scenario: dict, agent_cls=None, *, time_scale: float = 4.0):
     """Run one scenario through the kit's own harness; return (trace, score, agent)."""
     from harness.runner import EvaluationHarness
     from harness.scorer import score_scenario

@@ -54,7 +54,7 @@ def test_correction_cancels_only_the_dependent_call_and_state_is_versioned():
         assert cancel.call_id == first.call_id
         assert second.args == {"destination": "New York", "date": "Friday"}
         assert live.rt.version > v1
-        ack = next(o for o in live.seen if o.type == "speak" and o.kind == "ack" and "New York" in o.text)
+        ack = await live.until(lambda o: o.type == "speak" and o.kind == "ack" and "New York" in o.text)
         assert ack.snapshot["slots"]["destination"] == "New York"
         # The stale result arrives anyway: it must be ignored, never spoken.
         await live.send(EventType.TOOL_RESULT, call_id=first.call_id, status="success",
