@@ -1,0 +1,716 @@
+{
+  "rungs": [
+    {
+      "rung": "1 naive restart",
+      "summary": {
+        "public_plain": 79.0,
+        "public_weighted": 75.9,
+        "trail_plain": 60.7,
+        "all_plain": 66.4,
+        "time_to_yield_ms_p50": 164.0,
+        "time_to_yield_ms_p95": 188.0,
+        "revised_answer_ms_p50": 176.0,
+        "corrections": 0,
+        "fork_hits": 0,
+        "fork_hit_rate": null,
+        "backchannel_false_stops": 3,
+        "stale_output_leaks": 0,
+        "stale_output_leaks_runtime": 0,
+        "duplicate_writes": 0,
+        "stale_results_ignored": 0,
+        "calls_cancelled": 15,
+        "compensations": 0,
+        "held_at_barrier": 0,
+        "runtime_errors": 0
+      },
+      "rows": [
+        {
+          "scenario_id": "pub_01_text_simple",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_02_text_interrupt",
+          "median": 52.9
+        },
+        {
+          "scenario_id": "pub_03_text_chained_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_04_text_no_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_05_audio_asr_ambiguity",
+          "median": 53.8
+        },
+        {
+          "scenario_id": "pub_06_audio_disfluency",
+          "median": 56.9
+        },
+        {
+          "scenario_id": "pub_07_visual_port_lookup",
+          "median": 47.7
+        },
+        {
+          "scenario_id": "pub_08_text_tool_failure",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_09_text_unseen_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_01_backchannel_search",
+          "median": 37.0
+        },
+        {
+          "scenario_id": "trail_02_backchannel_booking",
+          "median": 33.0
+        },
+        {
+          "scenario_id": "trail_03_correction_city",
+          "median": 50.5
+        },
+        {
+          "scenario_id": "trail_04_correction_date",
+          "median": 42.5
+        },
+        {
+          "scenario_id": "trail_05_correction_passenger",
+          "median": 50.5
+        },
+        {
+          "scenario_id": "trail_06_compensate_committed",
+          "median": 25.0
+        },
+        {
+          "scenario_id": "trail_07_addition_passengers",
+          "median": 37.0
+        },
+        {
+          "scenario_id": "trail_08_addition_date",
+          "median": 25.0
+        },
+        {
+          "scenario_id": "trail_09_retraction",
+          "median": 88.0
+        },
+        {
+          "scenario_id": "trail_10_stop",
+          "median": 88.0
+        },
+        {
+          "scenario_id": "trail_11_detour_and_back",
+          "median": 39.0
+        },
+        {
+          "scenario_id": "trail_12_abandon_for_device",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_13_which_is_cheaper",
+          "median": 69.2
+        },
+        {
+          "scenario_id": "trail_14_say_again",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_15_ticket_confirmed",
+          "median": 69.2
+        },
+        {
+          "scenario_id": "trail_16_ticket_declined",
+          "median": 81.5
+        },
+        {
+          "scenario_id": "trail_17_ticket_interrupted",
+          "median": 88.0
+        },
+        {
+          "scenario_id": "trail_18_heckler",
+          "median": 54.5
+        },
+        {
+          "scenario_id": "trail_19_idempotent_booking",
+          "median": 37.0
+        },
+        {
+          "scenario_id": "trail_20_unseen_state_modifying",
+          "median": 100.0
+        }
+      ]
+    },
+    {
+      "rung": "2 +checkpoints/goals",
+      "summary": {
+        "public_plain": 84.3,
+        "public_weighted": 80.2,
+        "trail_plain": 95.4,
+        "all_plain": 91.9,
+        "time_to_yield_ms_p50": 188.0,
+        "time_to_yield_ms_p95": 3762.0,
+        "revised_answer_ms_p50": 4318.0,
+        "corrections": 0,
+        "fork_hits": 0,
+        "fork_hit_rate": null,
+        "backchannel_false_stops": 4,
+        "stale_output_leaks": 2,
+        "stale_output_leaks_runtime": 0,
+        "duplicate_writes": 0,
+        "stale_results_ignored": 0,
+        "calls_cancelled": 17,
+        "compensations": 0,
+        "held_at_barrier": 0,
+        "runtime_errors": 0
+      },
+      "rows": [
+        {
+          "scenario_id": "pub_01_text_simple",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_02_text_interrupt",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_03_text_chained_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_04_text_no_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_05_audio_asr_ambiguity",
+          "median": 53.8
+        },
+        {
+          "scenario_id": "pub_06_audio_disfluency",
+          "median": 56.9
+        },
+        {
+          "scenario_id": "pub_07_visual_port_lookup",
+          "median": 47.7
+        },
+        {
+          "scenario_id": "pub_08_text_tool_failure",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_09_text_unseen_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_01_backchannel_search",
+          "median": 88.0
+        },
+        {
+          "scenario_id": "trail_02_backchannel_booking",
+          "median": 92.0
+        },
+        {
+          "scenario_id": "trail_03_correction_city",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_04_correction_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_05_correction_passenger",
+          "median": 92.0
+        },
+        {
+          "scenario_id": "trail_06_compensate_committed",
+          "median": 86.0
+        },
+        {
+          "scenario_id": "trail_07_addition_passengers",
+          "median": 88.0
+        },
+        {
+          "scenario_id": "trail_08_addition_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_09_retraction",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_10_stop",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_11_detour_and_back",
+          "median": 95.0
+        },
+        {
+          "scenario_id": "trail_12_abandon_for_device",
+          "median": 82.5
+        },
+        {
+          "scenario_id": "trail_13_which_is_cheaper",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_14_say_again",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_15_ticket_confirmed",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_16_ticket_declined",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_17_ticket_interrupted",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_18_heckler",
+          "median": 96.2
+        },
+        {
+          "scenario_id": "trail_19_idempotent_booking",
+          "median": 88.0
+        },
+        {
+          "scenario_id": "trail_20_unseen_state_modifying",
+          "median": 100.0
+        }
+      ]
+    },
+    {
+      "rung": "3 +classifier",
+      "summary": {
+        "public_plain": 84.3,
+        "public_weighted": 80.2,
+        "trail_plain": 99.3,
+        "all_plain": 94.6,
+        "time_to_yield_ms_p50": 164.0,
+        "time_to_yield_ms_p95": 194.0,
+        "revised_answer_ms_p50": 2124.0,
+        "corrections": 7,
+        "fork_hits": 0,
+        "fork_hit_rate": 0.0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 1,
+        "stale_output_leaks_runtime": 0,
+        "duplicate_writes": 0,
+        "stale_results_ignored": 0,
+        "calls_cancelled": 11,
+        "compensations": 0,
+        "held_at_barrier": 0,
+        "runtime_errors": 0
+      },
+      "rows": [
+        {
+          "scenario_id": "pub_01_text_simple",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_02_text_interrupt",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_03_text_chained_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_04_text_no_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_05_audio_asr_ambiguity",
+          "median": 53.8
+        },
+        {
+          "scenario_id": "pub_06_audio_disfluency",
+          "median": 56.9
+        },
+        {
+          "scenario_id": "pub_07_visual_port_lookup",
+          "median": 47.7
+        },
+        {
+          "scenario_id": "pub_08_text_tool_failure",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_09_text_unseen_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_01_backchannel_search",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_02_backchannel_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_03_correction_city",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_04_correction_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_05_correction_passenger",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_06_compensate_committed",
+          "median": 86.0
+        },
+        {
+          "scenario_id": "trail_07_addition_passengers",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_08_addition_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_09_retraction",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_10_stop",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_11_detour_and_back",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_12_abandon_for_device",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_13_which_is_cheaper",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_14_say_again",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_15_ticket_confirmed",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_16_ticket_declined",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_17_ticket_interrupted",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_18_heckler",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_19_idempotent_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_20_unseen_state_modifying",
+          "median": 100.0
+        }
+      ]
+    },
+    {
+      "rung": "4 +forks",
+      "summary": {
+        "public_plain": 82.7,
+        "public_weighted": 78.9,
+        "trail_plain": 99.3,
+        "all_plain": 94.2,
+        "time_to_yield_ms_p50": 164.0,
+        "time_to_yield_ms_p95": 240.0,
+        "revised_answer_ms_p50": 2124.0,
+        "corrections": 7,
+        "fork_hits": 0,
+        "fork_hit_rate": 0.0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 1,
+        "stale_output_leaks_runtime": 0,
+        "duplicate_writes": 0,
+        "stale_results_ignored": 0,
+        "calls_cancelled": 11,
+        "compensations": 0,
+        "held_at_barrier": 0,
+        "runtime_errors": 0
+      },
+      "rows": [
+        {
+          "scenario_id": "pub_01_text_simple",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_02_text_interrupt",
+          "median": 86.1
+        },
+        {
+          "scenario_id": "pub_03_text_chained_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_04_text_no_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_05_audio_asr_ambiguity",
+          "median": 53.8
+        },
+        {
+          "scenario_id": "pub_06_audio_disfluency",
+          "median": 56.9
+        },
+        {
+          "scenario_id": "pub_07_visual_port_lookup",
+          "median": 47.7
+        },
+        {
+          "scenario_id": "pub_08_text_tool_failure",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_09_text_unseen_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_01_backchannel_search",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_02_backchannel_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_03_correction_city",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_04_correction_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_05_correction_passenger",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_06_compensate_committed",
+          "median": 86.0
+        },
+        {
+          "scenario_id": "trail_07_addition_passengers",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_08_addition_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_09_retraction",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_10_stop",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_11_detour_and_back",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_12_abandon_for_device",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_13_which_is_cheaper",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_14_say_again",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_15_ticket_confirmed",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_16_ticket_declined",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_17_ticket_interrupted",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_18_heckler",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_19_idempotent_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_20_unseen_state_modifying",
+          "median": 100.0
+        }
+      ]
+    },
+    {
+      "rung": "5 +saga",
+      "summary": {
+        "public_plain": 84.3,
+        "public_weighted": 80.2,
+        "trail_plain": 100.0,
+        "all_plain": 95.1,
+        "time_to_yield_ms_p50": 164.0,
+        "time_to_yield_ms_p95": 190.0,
+        "revised_answer_ms_p50": 2064.0,
+        "corrections": 7,
+        "fork_hits": 0,
+        "fork_hit_rate": 0.0,
+        "backchannel_false_stops": 0,
+        "stale_output_leaks": 1,
+        "stale_output_leaks_runtime": 0,
+        "duplicate_writes": 0,
+        "stale_results_ignored": 0,
+        "calls_cancelled": 11,
+        "compensations": 1,
+        "held_at_barrier": 0,
+        "runtime_errors": 0
+      },
+      "rows": [
+        {
+          "scenario_id": "pub_01_text_simple",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_02_text_interrupt",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_03_text_chained_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_04_text_no_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_05_audio_asr_ambiguity",
+          "median": 53.8
+        },
+        {
+          "scenario_id": "pub_06_audio_disfluency",
+          "median": 56.9
+        },
+        {
+          "scenario_id": "pub_07_visual_port_lookup",
+          "median": 47.7
+        },
+        {
+          "scenario_id": "pub_08_text_tool_failure",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "pub_09_text_unseen_tool",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_01_backchannel_search",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_02_backchannel_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_03_correction_city",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_04_correction_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_05_correction_passenger",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_06_compensate_committed",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_07_addition_passengers",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_08_addition_date",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_09_retraction",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_10_stop",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_11_detour_and_back",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_12_abandon_for_device",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_13_which_is_cheaper",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_14_say_again",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_15_ticket_confirmed",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_16_ticket_declined",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_17_ticket_interrupted",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_18_heckler",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_19_idempotent_booking",
+          "median": 100.0
+        },
+        {
+          "scenario_id": "trail_20_unseen_state_modifying",
+          "median": 100.0
+        }
+      ]
+    }
+  ],
+  "time_scale": 4.0,
+  "reps": 1
+}

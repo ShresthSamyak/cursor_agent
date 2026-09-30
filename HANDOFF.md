@@ -32,6 +32,7 @@ The PDF's three differentiators and where they live:
 | Unit + e2e tests `pytest` (rules only, deterministic) | **87 passed** | `tests/` |
 | PDF zero-targets (rules-only run): backchannel false stops / duplicate writes / runtime errors | 0 / 0 / 0 | `reports/metrics_rules.md` |
 | Desktop demo replay `python -m trail demo all --speed 2` | All Act 1–3 beats correct: self-interrupt on cheaper Monday fare, fork hit on "two passengers", baggage detour + back, hold→book then payment held at barrier, afford join (₹9,000 vs ₹5,000 left), mentor waits for typing pause, drops fixed warning, secret interrupts instantly, pre-diagnosis hit. Runtime errors 0 | console |
+| Ablation (rules only, scale 4) | suite 60.7 → 95.4 → 99.3 → 99.3 → 100.0; backchannel false stops 3 → 4 → 0 → 0 → 0 | `reports/ablation.png` |
 | Heckler finale `python -m trail demo heckler` (trail_18, kit scorer) | Trail 100.0 vs naive cancel-and-restart 54.5 | console |
 
 Public-set scores by modality (official run): text 100, audio 100, visual 100.
@@ -187,7 +188,7 @@ Pointer-shift is covered in unit logic (`Runtime._pointer_shift`) but has no kit
 
 Phase 0 — core runtime: all done (protocol mapped, adapter, versioned single-writer state, cancellable work with checkpoints, every public scenario runs with no protocol errors).
 Phase 1 — interrupt intelligence: all done (7-type classifier + duck-then-decide, goal stack park/resume/abandon, slot-dependency re-runs, fillers, beats the reference agent over 3 reps: 100 vs ~52).
-Phase 2 — speculation and tool safety: all done (fork manager with budgets and kill-on-change, saga tags + rollback + compensation, commit barrier + call_id idempotency, 20 own scenarios + metrics table). Ablation runner written; **ablation chart not yet generated** (`python -m trail ablate`).
+Phase 2 — speculation and tool safety: all done (fork manager with budgets and kill-on-change, saga tags + rollback + compensation, commit barrier + call_id idempotency, 20 own scenarios + metrics table). Ablation run done: `reports/ablation.png/.json/.log`.
 Phase 3 — desktop hero: **in progress**
 - [x] Fictional travel corpus (`trail/desktop/corpus/travel.json`)
 - [x] Desktop saga tools (`trail/desktop/tools.py`)
@@ -205,7 +206,7 @@ Phase 4 — second act and submission: **not started / in progress**
 - [x] VS Code extension `extensions/vscode/` (TypeScript, compiles to out/ with tsc): hover + dwell, selection, typing bursts, doc_change on typing pause and immediately on a pasted key, save, test_run (tasks + shell integration), terminal output via shell integration, window focus; secrets redacted in the editor, only `secret_lines` sent; excluded-file globs; notices as notifications with 'Not now' + gutter decorations; status-bar waiting badge; commands (declare intent, ask, not now, teach/fix, toggle perception, stop). Compiles; **not yet run inside VS Code (F5)**
 - [x] Act 3 demo workspace `extensions/vscode/demo-workspace/` (auth.py OAuth stub, test_auth.py failing on purpose, README with the beats); pre-diagnosis verified on its real pytest output
 - [ ] Interrupt arbiter wired to editor flow state (core arbiter done)
-- [ ] Ablation runs and chart
+- [x] Ablation runs and chart (rules only, scale 4): Trail suite 60.7 (naive) → 95.4 (+goals) → 99.3 (+classifier) → 99.3 (+forks) → 100.0 (+saga); backchannel false stops 3 → 4 → 0 → 0 → 0; public set flat ~84 because the run used no speech/vision models. Forks add nothing to harness scores by design (compute-only there); their value shows in desktop mode (fork hit rate)
 - [ ] Scripted demo replay (`python -m trail demo ...`), rehearsal, backup videos (videos need a human)
 - [ ] Deck `CollegeName_TeamName_Submission.pptx` (needs college/team names), 5-minute video (human), release tag `PRISM_GENAI_HACKATHON_Y2026` (on the final commit, when the team says so)
 - [ ] Hidden-set stress suite (background agent → `scenarios_stress/`, `reports/stress_findings.md`), then fix findings
@@ -260,3 +261,4 @@ Phase 4 — second act and submission: **not started / in progress**
 - Wrote the Electron overlay shell + overlay README (not launched: electron not installed).
 - Wrote speech.py (VAD/STT/TTS) and uia.py; CLI `speech`, `uia`. VAD verified on synthetic frames.
 - Rewrote README.md and docs/architecture.md for the current system; removed obsolete Phase 0 docs (docs/protocol.md, docs/build-status.md).
+- Ran the ablation ladder; redrew the chart without misleading correction-latency bars (naive 'answers' instantly but wrongly) and with backchannel false stops per rung.

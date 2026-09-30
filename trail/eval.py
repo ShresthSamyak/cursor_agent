@@ -228,21 +228,21 @@ def ablation_chart(result: dict[str, Any]) -> Path | None:
     labels = [r["rung"] for r in result["rungs"]]
     pub = [r["summary"]["public_plain"] or 0 for r in result["rungs"]]
     own = [r["summary"]["trail_plain"] or 0 for r in result["rungs"]]
-    lat = [r["summary"]["revised_answer_ms_p50"] or 0 for r in result["rungs"]]
+    stops = [r["summary"]["backchannel_false_stops"] or 0 for r in result["rungs"]]
     fig, ax = plt.subplots(figsize=(9, 4.8), dpi=150)
     x = range(len(labels))
     ax.plot(x, own, marker="o", color="#1f5fbf", label="Trail interruption suite (20)")
-    ax.plot(x, pub, marker="s", color="#8a8a8a", label="Kit public set (9)")
+    ax.plot(x, pub, marker="s", color="#8a8a8a", label="Kit public set (9, rules only: no speech/vision models)")
     ax.axhline(52, color="#c44", linestyle=":", linewidth=1)
     ax.text(len(labels) - 1, 53, "kit reference agent ~52", color="#c44", ha="right", fontsize=8)
+    for i, (y, n) in enumerate(zip(own, stops)):
+        ax.annotate(f"{y:.1f}", (i, y), textcoords="offset points", xytext=(0, 8), ha="center", fontsize=8, color="#1f5fbf")
+        ax.annotate(f"backchannel false stops: {n}", (i, 8), ha="center", fontsize=7, color="#c44" if n else "#2a8a4a")
     ax.set_xticks(list(x), labels, rotation=12, fontsize=8)
     ax.set_ylabel("Harness score (kit scorer, median)")
-    ax.set_ylim(0, 105)
-    ax2 = ax.twinx()
-    ax2.bar(x, lat, alpha=0.18, color="#1f5fbf", width=0.45)
-    ax2.set_ylabel("Correction to revised answer, p50 (virtual ms)", fontsize=8)
+    ax.set_ylim(0, 108)
     ax.set_title("Ablation: each runtime mechanism switched on in turn")
-    ax.legend(loc="lower right", fontsize=8)
+    ax.legend(loc="center right", fontsize=8)
     for s in ("top",):
         ax.spines[s].set_visible(False)
     fig.tight_layout()

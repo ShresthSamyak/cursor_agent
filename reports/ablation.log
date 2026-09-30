@@ -3,3 +3,9 @@
 == 2 +checkpoints/goals
    public 84.3  trail 95.4  revised-answer p50 4318.0  false stops 4  dup writes 0
 == 3 +classifier
+   public 84.3  trail 99.3  revised-answer p50 2124.0  false stops 0  dup writes 0
+== 4 +forks
+   public 82.7  trail 99.3  revised-answer p50 2124.0  false stops 0  dup writes 0
+== 5 +saga
+   public 84.3  trail 100.0  revised-answer p50 2064.0  false stops 0  dup writes 0
+wrote C:\Users\HP\Documents\prism\reports\ablation.json and C:\Users\HP\Documents\prism\reports\ablation.png
