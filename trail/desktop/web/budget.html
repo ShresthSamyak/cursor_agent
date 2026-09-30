@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>October trip budget · Sheet</title>
+<style>
+  body { margin:0; font: 14px "Segoe UI", system-ui, sans-serif; background:#f3f3f3; color:#222; }
+  .bar { background:#107c41; color:#fff; padding:10px 20px; font-weight:600; }
+  .formula { background:#fff; border-bottom:1px solid #ddd; padding:6px 20px; font-family:Consolas, monospace; color:#555; }
+  table { border-collapse: collapse; margin: 18px 20px; background:#fff; }
+  th, td { border:1px solid #d4d4d4; padding:6px 14px; min-width:110px; }
+  th { background:#f0f0f0; font-weight:600; color:#555; }
+  td.num { text-align:right; font-variant-numeric: tabular-nums; }
+  tr.total td { font-weight:600; background:#f8fbf8; }
+  td.key { background:#e8f5e9; outline:2px solid #107c41; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="bar">▦ October trip budget.xlsx — Sheet1</div>
+<div class="formula" id="formula">fx</div>
+<table role="grid" aria-label="October trip budget" id="sheet"></table>
+<script>
+const fmt = n => "₹" + n.toLocaleString("en-IN");
+fetch("/corpus/travel.json").then(r => r.json()).then(c => {
+  const b = c.budget_sheet;
+  const rows = [`<tr><th></th><th>A</th><th>B</th><th>C</th></tr>`,
+    `<tr><th>1</th><th role="columnheader">Item</th><th role="columnheader">Planned</th><th role="columnheader">Spent</th></tr>`];
+  b.rows.forEach((r, i) => rows.push(`<tr><th role="rowheader">${i + 2}</th><td role="gridcell">${r.item}</td>
+    <td role="gridcell" class="num">${fmt(r.planned)}</td><td role="gridcell" class="num">${fmt(r.spent)}</td></tr>`));
+  const n = b.rows.length + 2;
+  rows.push(`<tr class="total"><th role="rowheader">${n}</th><td role="gridcell">${b.remaining_label}</td>
+    <td role="gridcell" class="num key" id="remaining" aria-label="${b.remaining_label}">${b.remaining_label} · ${fmt(b.remaining)}</td><td></td></tr>`);
+  document.getElementById("sheet").innerHTML = rows.join("");
+  document.getElementById("formula").textContent = `B${n}  fx  =B2-C2-(C3)  →  ${fmt(b.remaining)}`;
+});
+</script>
+</body>
+</html>

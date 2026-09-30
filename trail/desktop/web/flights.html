@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skylark Air · Search results</title>
+<style>
+  :root { --ink:#132033; --muted:#5d6b80; --line:#e3e8f0; --brand:#0b5fff; --brand2:#00a3a3; --bg:#f4f7fb; --good:#0f9d58; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.45 "Segoe UI", system-ui, sans-serif; color:var(--ink); background:var(--bg); }
+  header { background: linear-gradient(90deg, #0a2a66, #0b5fff); color:#fff; padding:16px 32px; display:flex; align-items:center; gap:18px; }
+  header .logo { font-weight:700; font-size:20px; letter-spacing:.02em; }
+  header .note { margin-left:auto; font-size:12px; opacity:.8; }
+  main { max-width:1100px; margin:24px auto; padding:0 20px; display:grid; grid-template-columns: 1fr 300px; gap:20px; }
+  .search { grid-column: 1 / -1; background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 18px; display:flex; gap:14px; align-items:center; }
+  .search select { padding:8px 10px; border-radius:8px; border:1px solid var(--line); font:inherit; }
+  .search h1 { margin:0; font-size:18px; }
+  .strip { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-bottom:16px; }
+  .day { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; cursor:pointer; transition: box-shadow .15s, border-color .15s; }
+  .day:hover { border-color: var(--brand); box-shadow: 0 4px 14px rgba(11,95,255,.12); }
+  .day .d { font-weight:600; } .day .p { font-size:18px; font-weight:700; color:var(--brand); }
+  .day.low .p { color: var(--good); }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:10px; display:grid; grid-template-columns: 110px 1fr auto auto; gap:16px; align-items:center; }
+  .times { font-size:18px; font-weight:600; } .muted { color:var(--muted); font-size:13px; }
+  .price { font-size:20px; font-weight:700; }
+  button.book { background:var(--brand); color:#fff; border:0; border-radius:10px; padding:10px 16px; font:inherit; font-weight:600; cursor:pointer; }
+  .icon { display:inline-flex; width:20px; height:20px; border-radius:50%; background:#e8efff; color:var(--brand); font-size:12px; align-items:center; justify-content:center; margin-left:6px; cursor:help; }
+  aside section { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:14px; }
+  aside h2 { font-size:14px; margin:0 0 8px; }
+  label { display:block; font-size:12px; color:var(--muted); margin-top:8px; }
+  input { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .fine { font-size:11px; color:var(--muted); margin-top:8px; }
+</style>
+</head>
+<body>
+<header><span class="logo">✈ Skylark Air</span><span>Fictional demo airline</span><span class="note">Demo page for Trail · no real fares</span></header>
+<main>
+  <div class="search">
+    <h1 id="route-title">Chandigarh → Goa</h1>
+    <select id="route" aria-label="Route"></select>
+    <span class="muted">One way · Economy · 1 adult</span>
+  </div>
+  <div>
+    <!-- The date strip: each cell carries the day and price, and its container carries the route. -->
+    <section id="dates" aria-label="Chandigarh → Goa" data-route="Chandigarh → Goa">
+      <div class="strip" id="strip"></div>
+    </section>
+    <section id="results" aria-label="Chandigarh → Goa" data-route="Chandigarh → Goa"></section>
+  </div>
+  <aside>
+    <section aria-label="Fare rules">
+      <h2>Fare rules <span class="icon" id="fare-rules" title="Fare rules" data-trail="fare rules">i</span></h2>
+      <div class="muted" id="rules"></div>
+    </section>
+    <section aria-label="Baggage">
+      <h2>Baggage <span class="icon" id="baggage" title="Baggage allowance" data-trail="baggage">🧳</span></h2>
+      <div class="muted" id="bag"></div>
+    </section>
+    <section aria-label="Checkout" data-sensitive>
+      <h2>Checkout</h2>
+      <label>Passenger name<input name="passenger" autocomplete="name"></label>
+      <label>Card number<input name="card" autocomplete="cc-number" inputmode="numeric"></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password"></label>
+      <div class="fine">Card and password fields are never read by Trail.</div>
+    </section>
+  </aside>
+</main>
+<script>
+const fmt = n => "₹" + n.toLocaleString("en-IN");
+const short = d => d.slice(0, 3);
+let corpus;
+function render(route) {
+  const r = corpus.routes[route];
+  document.getElementById("route-title").textContent = route;
+  for (const id of ["dates", "results"]) {
+    const el = document.getElementById(id);
+    el.setAttribute("aria-label", route);
+    el.dataset.route = route;
+  }
+  const min = Math.min(...r.fares.map(f => f.price));
+  document.getElementById("strip").innerHTML = r.fares.map(f =>
+    `<div class="day${f.price === min ? " low" : ""}" role="cell" data-flight="${f.flight_id}">
+       <div class="d">${short(f.day)} · ${fmt(f.price)}</div><div class="muted">${f.date.slice(5)}</div></div>`).join("");
+  document.getElementById("results").innerHTML = r.fares.map(f =>
+    `<div class="card" role="row" data-flight="${f.flight_id}">
+       <div><div class="times">${f.depart}</div><div class="muted">${f.arrive} arrive</div></div>
+       <div><strong>${short(f.day)} · ${fmt(f.price)}</strong><div class="muted">${r.origin_code} → ${r.destination_code} · nonstop · ${f.flight_id} · ${f.seats_left} seats left</div></div>
+       <div class="price">${fmt(f.price)}</div>
+       <button class="book" type="button">Book</button></div>`).join("");
+}
+fetch("/corpus/travel.json").then(r => r.json()).then(c => {
+  corpus = c;
+  const sel = document.getElementById("route");
+  sel.innerHTML = Object.keys(c.routes).map(k => `<option>${k}</option>`).join("");
+  sel.onchange = () => render(sel.value);
+  document.getElementById("rules").textContent = Object.values(c.fare_rules).map(v => v.refund).join(" ");
+  document.getElementById("bag").textContent = c.baggage.cabin + " " + c.baggage.checked;
+  render(Object.keys(c.routes)[0]);
+});
+</script>
+</body>
+</html>

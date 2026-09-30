@@ -1,0 +1,11 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Trail perception options</title>
+<style>body{font:14px system-ui;margin:24px;max-width:520px}label{display:block;margin:12px 0 4px}input{width:100%;padding:8px}button{margin-top:14px;padding:8px 14px}</style>
+</head><body>
+<h1>Trail perception</h1>
+<p>Events go only to your local bridge (<code>python -m trail bridge</code>). Copy the token it prints, or use <code>trail-dev</code> with <code>--dev</code>.</p>
+<label for="url">Bridge URL</label><input id="url">
+<label for="token">Token</label><input id="token">
+<button id="save">Save</button> <span id="ok"></span>
+<script src="dist/options.js" type="module"></script>
+</body></html>

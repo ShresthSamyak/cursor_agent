@@ -4,11 +4,8 @@
   "private": true,
   "description": "Trail perception source for Chrome (Manifest V3): hover, dwell, selection and focus events to the local bridge.",
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/check-manifest.mjs",
-    "watch": "tsc -p tsconfig.json --watch",
-    "icons": "node scripts/make-icons.mjs",
-    "check": "node scripts/check-manifest.mjs",
-    "test": "node scripts/test-extract.mjs"
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
   },
   "devDependencies": {
     "typescript": "^5.6.3"
