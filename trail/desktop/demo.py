@@ -209,7 +209,51 @@ def heckler() -> None:
         print(f"{name:>26}: score {score:5.1f}   response to each interrupt (ms): {ys}")
 
 
-def main(act: str, *, speed: float = 1.0) -> None:
+async def play_via_bridge(acts: list[str], *, url: str = "ws://127.0.0.1:8765/ws", token: str = "trail-dev",
+                          speed: float = 1.0, on_step=None) -> None:
+    """Send the same act events to a running bridge, so the overlay and extensions render the live runtime.
+
+    `on_step(step)` (optional, may be async) runs before each event is sent, e.g. to move the pointer.
+    """
+    from websockets.asyncio.client import connect
+
+    seen: list[dict] = []
+    printer = Printer()
+    async with connect(f"{url}?client=demo&token={token}", max_size=None) as ws:
+        async def listen() -> None:
+            async for raw in ws:
+                f = json.loads(raw)
+                if f.get("type") == "output":
+                    o = f["output"]
+                    seen.append(o)
+                    printer.show(Output.model_validate(o))
+
+        listener = asyncio.create_task(listen())
+        for act in acts:
+            print(f"\n===== {act} =====", flush=True)
+            for step in ACTS[act]:
+                if step.say:
+                    print(f"{printer.ts()}  ── {step.say}", flush=True)
+                if on_step is not None:
+                    r = on_step(step)
+                    if asyncio.iscoroutine(r):
+                        await r
+                if step.event is None:
+                    continue
+                mark = len(seen)
+                await ws.send(json.dumps({"type": "event", "event": step.event}, ensure_ascii=False))
+                if step.until:
+                    kind, _, sub = step.until.partition(":")
+                    deadline = time.monotonic() + 12 / max(speed, 0.1)
+                    while time.monotonic() < deadline and not any(
+                            o.get("type") == kind and (o.get("kind") == sub or o.get("code") == sub) for o in seen[mark:]):
+                        await asyncio.sleep(0.02)
+                await asyncio.sleep(step.wait / max(speed, 0.1))
+            await asyncio.sleep(1.2 / max(speed, 0.1))
+        listener.cancel()
+
+
+def main(act: str, *, speed: float = 1.0, via_bridge: bool = False, token: str = "trail-dev") -> None:
     if sys.platform == "win32":
         try:
             sys.stdout.reconfigure(encoding="utf-8")
@@ -219,4 +263,7 @@ def main(act: str, *, speed: float = 1.0) -> None:
         heckler()
         return
     acts = ["act1", "act2", "act3"] if act == "all" else [act]
-    asyncio.run(play(acts, speed=speed))
+    if via_bridge:
+        asyncio.run(play_via_bridge(acts, speed=speed, token=token))
+    else:
+        asyncio.run(play(acts, speed=speed))

@@ -12,6 +12,6 @@ tmp/
 .env.*
 !.env.example
 node_modules/
-extensions/*/out/
-extensions/*/dist/
+# extension builds are committed (small) so "Load unpacked" / F5 work from a clone
+!extensions/chrome/dist/
 *.vsix

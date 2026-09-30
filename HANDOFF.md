@@ -254,11 +254,25 @@ Second live round ("fix them", 2026-09-30) — found and fixed with a real micro
 * Verified after all of it: pytest **127 passed**; all 47 scenarios **100** with models at scale 1; official `eval_submission.py --reps 3`
   **weighted 100.0 (27/27)**; `demo all` every beat correct, errors 0.
 
+GitHub submission round (2026-09-30):
+* README rewritten as the submission README (results, demo, mechanisms, mermaid architecture, setup, running, layout, tests,
+  privacy, troubleshooting, kit provenance). requirements.txt completed (sounddevice, pywinauto, psutil; non-pip prerequisites listed).
+* Demo video `docs/demo/trail_demo.mp4` (3 min, 2.3 MB, H.264): Acts 1–2 recorded live (real bridge + runtime + Gemma 4 on GPU +
+  Electron overlay over the Chrome demo pages; a driver moves the OS pointer to the real page elements via UI Automation and sends the
+  same bridge frames as the extension/voice client — disclosed on a card in the video), Act 3 + heckler as real console replays,
+  results + ablation cards. Recorder/composer scripts lived in the session scratchpad (ffmpeg gdigrab from the imageio-ffmpeg wheel).
+* `python -m trail demo ... --via-bridge` implemented (was documented, missing): sends the act events to a running bridge so the overlay renders them.
+* Built extension outputs are now committed (`extensions/chrome/dist/`, `extensions/vscode/out/`) so Load unpacked / F5 work from a clone;
+  397 accidentally committed `node_modules` files were untracked.
+* Deck: the team has its own PPT; README links `CollegeName_TeamName_Submission.pptx` at the repo root (rename the link to the real file name).
+  `scripts/make_deck.py` (an unused generator) is left untracked.
+* Tag `PRISM_GENAI_HACKATHON_Y2026` created on the submission commit and pushed (user asked). If the deck is added later, the tag must be
+  moved to the new final commit (`git tag -f ...` + `git push -f origin PRISM_GENAI_HACKATHON_Y2026`).
+
 Left, needing a person or a decision:
-* Install the Chrome extension by hand (Load unpacked) and rehearse the demo; record backup videos.
-* Deck `CollegeName_TeamName_Submission.pptx` — needs the college and team names.
+* Add the PPT file to the repo root and fix its link in README; then move the tag to that final commit.
+* Optional: record a narrated walkthrough (the included video is captioned, no voice) and link it in README.
 * Set the real team name in `submission.yaml`; register `SECRET_GEMINI_API_KEY` on the portal if cloud audio/vision is wanted on the evaluator.
-* Release tag `PRISM_GENAI_HACKATHON_Y2026` on the final commit (team's call).
 
 Earlier notes:
 
@@ -319,3 +333,4 @@ Earlier notes:
 - Full live verification round (see §9): GPU placement check + warning in `ollama.py`, `/status` endpoint in the bridge; eval stale-leak metric no longer flags values still present in the final slots (false positives on trail_04/st_18); Chrome extension forwards `speak_end` to toasts; CodeMentor dedupes delivered findings by rule + content hash (VS Code live test showed repeats, and a line-number key shifted on insert); `speech.py` uses the same domain ASR prompt as the kit path (first utterance was misheard). Electron installed and launched. All 47 scenarios 100 with models; pytest 105 passed.
 - `trail eval`/`ablate` default time scale is now 1 when models are active (a default-4 run showed pub_07 at 47.7 purely from the compressed clock; public set 100.0 at scale 1).
 - Second live round: mic room-noise/hallucination/echo hardening + `--wake`; runtime ignores overheard mic speech, fallback cooldown, no identical re-answers on mic turns; list-result formatting (names, prices, cheapest, passenger totals); `fare` synonyms, `route` arg class, numeric passengers = count; structured-slot reply validation; desktop context carry-over; harness 22 ms hold for early tool calls. New tests `tests/test_speech.py`, `tests/test_desktop_voice.py`. pytest 127 passed; 47/47 at 100 with models; official weighted 100.0; demo all correct.
+- GitHub submission: detailed README, complete requirements.txt, demo video docs/demo/trail_demo.mp4 (live Acts 1–2 + replays), `demo --via-bridge`, committed extension builds, node_modules untracked, tag PRISM_GENAI_HACKATHON_Y2026 pushed. pytest 127 passed.

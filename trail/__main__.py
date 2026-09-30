@@ -39,6 +39,8 @@ def main() -> None:
     dm = sub.add_parser("demo", help="scripted replay of a demo act (no perception needed)")
     dm.add_argument("act", choices=["act1", "act2", "act3", "heckler", "all"])
     dm.add_argument("--speed", type=float, default=1.0)
+    dm.add_argument("--via-bridge", action="store_true", help="send the events to a running bridge (overlay shows them)")
+    dm.add_argument("--token", default="trail-dev")
     args = parser.parse_args()
 
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
@@ -81,7 +83,7 @@ def main() -> None:
     if args.command == "demo":
         from .desktop.demo import main as demo_main
 
-        demo_main(args.act, speed=args.speed)
+        demo_main(args.act, speed=args.speed, via_bridge=args.via_bridge, token=args.token)
         return
     parser.print_help()
     sys.exit(2)
